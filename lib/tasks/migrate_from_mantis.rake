@@ -99,7 +99,7 @@ task :migrate_from_mantis => :environment do
 
       def email
         if read_attribute(:email).match(/^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i) &&
-             !User.find_by_mail(read_attribute(:email))
+             !User.find_by_email(read_attribute(:email))
           @email = read_attribute(:email)
         else
           @email = "#{username}@foo.bar"
@@ -244,8 +244,8 @@ task :migrate_from_mantis => :environment do
       MantisUser.all.each do |user|
         u = User.new :firstname => encode(user.firstname),
                      :lastname => encode(user.lastname),
-                     :mail => user.email,
-                     :last_login_on => user.last_visit
+                     :email => user.email,
+                     :last_sign_in_at => user.last_visit
         u.login = user.username
         u.password = 'mantis'
         u.status = User::STATUS_LOCKED if user.enabled != 1

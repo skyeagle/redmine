@@ -79,7 +79,7 @@ class MailHandler < ActionMailer::Base
         end
       end
     end
-    @user = User.find_by_mail(sender_email) if sender_email.present?
+    @user = User.find_by_email(sender_email) if sender_email.present?
     if @user && !@user.active?
       if logger && logger.info
         logger.info  "MailHandler: ignoring email from non-active user [#{@user.login}]"
@@ -107,7 +107,7 @@ class MailHandler < ActionMailer::Base
       else
         # Default behaviour, emails from unknown users are ignored
         if logger && logger.info
-          logger.info  "MailHandler: ignoring email from unknown user [#{sender_email}]" 
+          logger.info  "MailHandler: ignoring email from unknown user [#{sender_email}]"
         end
         return false
       end
@@ -281,7 +281,7 @@ class MailHandler < ActionMailer::Base
     if user.allowed_to?("add_#{obj.class.name.underscore}_watchers".to_sym, obj.project)
       addresses = [email.to, email.cc].flatten.compact.uniq.collect {|a| a.strip.downcase}
       unless addresses.empty?
-        watchers = User.active.where('LOWER(mail) IN (?)', addresses).all
+        watchers = User.active.where('LOWER(email) IN (?)', addresses).all
         watchers.each {|w| obj.add_watcher(w)}
       end
     end
@@ -422,7 +422,7 @@ class MailHandler < ActionMailer::Base
     user = User.new
 
     # Truncating the email address would result in an invalid format
-    user.mail = email_address
+    user.email = email_address
     assign_string_attribute_with_limit(user, 'login', email_address, User::LOGIN_LENGTH_LIMIT)
 
     names = fullname.blank? ? email_address.gsub(/@.*$/, '').split('.') : fullname.split
@@ -453,6 +453,7 @@ class MailHandler < ActionMailer::Base
     end
     if addr.present?
       user = self.class.new_user_from_attributes(addr, name)
+      user.activate
       if user.save
         user
       else
@@ -480,12 +481,12 @@ class MailHandler < ActionMailer::Base
     assignable = issue.assignable_users
     assignee = nil
     assignee ||= assignable.detect {|a|
-                   a.mail.to_s.downcase == keyword ||
+                   a.email.to_s.downcase == keyword ||
                      a.login.to_s.downcase == keyword
                  }
     if assignee.nil? && keyword.match(/ /)
       firstname, lastname = *(keyword.split) # "First Last Throwaway"
-      assignee ||= assignable.detect {|a| 
+      assignee ||= assignable.detect {|a|
                      a.is_a?(User) && a.firstname.to_s.downcase == firstname &&
                        a.lastname.to_s.downcase == lastname
                    }

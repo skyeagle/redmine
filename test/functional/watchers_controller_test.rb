@@ -22,11 +22,11 @@ class WatchersControllerTest < ActionController::TestCase
            :issues, :trackers, :projects_trackers, :issue_statuses, :enumerations, :watchers
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_watch
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     assert_difference('Watcher.count') do
       xhr :post, :watch, :object_type => 'issue', :object_id => '1'
       assert_response :success
@@ -37,7 +37,7 @@ class WatchersControllerTest < ActionController::TestCase
 
   def test_watch_should_be_denied_without_permission
     Role.find(2).remove_permission! :view_issues
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     assert_no_difference('Watcher.count') do
       xhr :post, :watch, :object_type => 'issue', :object_id => '1'
       assert_response 403
@@ -45,7 +45,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_watch_invalid_class_should_respond_with_404
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     assert_no_difference('Watcher.count') do
       xhr :post, :watch, :object_type => 'foo', :object_id => '1'
       assert_response 404
@@ -53,7 +53,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_watch_invalid_object_should_respond_with_404
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     assert_no_difference('Watcher.count') do
       xhr :post, :watch, :object_type => 'issue', :object_id => '999'
       assert_response 404
@@ -61,7 +61,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_unwatch
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     assert_difference('Watcher.count', -1) do
       xhr :post, :unwatch, :object_type => 'issue', :object_id => '2'
       assert_response :success
@@ -71,14 +71,14 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :new, :object_type => 'issue', :object_id => '2'
     assert_response :success
     assert_match /ajax-modal/, response.body
   end
 
   def test_new_for_new_record_with_id
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :new, :project_id => 1
     assert_response :success
     assert_equal Project.find(1), assigns(:project)
@@ -86,7 +86,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_new_for_new_record_with_identifier
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :new, :project_id => 'ecookbook'
     assert_response :success
     assert_equal Project.find(1), assigns(:project)
@@ -94,7 +94,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_create
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference('Watcher.count') do
       xhr :post, :create, :object_type => 'issue', :object_id => '2', :watcher => {:user_id => '4'}
       assert_response :success
@@ -105,7 +105,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_create_multiple
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference('Watcher.count', 2) do
       xhr :post, :create, :object_type => 'issue', :object_id => '2', :watcher => {:user_ids => ['4', '7']}
       assert_response :success
@@ -137,7 +137,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_append
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Watcher.count' do
       xhr :post, :append, :watcher => {:user_ids => ['4', '7']}
       assert_response :success
@@ -147,7 +147,7 @@ class WatchersControllerTest < ActionController::TestCase
   end
 
   def test_remove_watcher
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference('Watcher.count', -1) do
       xhr :post, :destroy, :object_type => 'issue', :object_id => '2', :user_id => '3'
       assert_response :success

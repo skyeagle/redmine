@@ -21,7 +21,7 @@ class NewsControllerTest < ActionController::TestCase
   fixtures :projects, :users, :roles, :members, :member_roles, :enabled_modules, :news, :comments
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_index
@@ -67,7 +67,7 @@ class NewsControllerTest < ActionController::TestCase
   end
 
   def test_get_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => 1
     assert_response :success
     assert_template 'new'
@@ -75,7 +75,7 @@ class NewsControllerTest < ActionController::TestCase
 
   def test_post_create
     ActionMailer::Base.deliveries.clear
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     with_settings :notified_events => %w(news_added) do
       post :create, :project_id => 1, :news => { :title => 'NewsControllerTest',
@@ -94,7 +94,7 @@ class NewsControllerTest < ActionController::TestCase
 
   def test_post_create_with_attachment
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'News.count' do
       assert_difference 'Attachment.count' do
         post :create, :project_id => 1,
@@ -108,7 +108,7 @@ class NewsControllerTest < ActionController::TestCase
   end
 
   def test_post_create_with_validation_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :project_id => 1, :news => { :title => '',
                                             :description => 'This is the description',
                                             :summary => '' }
@@ -120,14 +120,14 @@ class NewsControllerTest < ActionController::TestCase
   end
 
   def test_get_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 1
     assert_response :success
     assert_template 'edit'
   end
 
   def test_put_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 1, :news => { :description => 'Description changed by test_post_edit' }
     assert_redirected_to '/news/1'
     news = News.find(1)
@@ -136,7 +136,7 @@ class NewsControllerTest < ActionController::TestCase
 
   def test_put_update_with_attachment
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'News.count' do
       assert_difference 'Attachment.count' do
         put :update, :id => 1,
@@ -149,7 +149,7 @@ class NewsControllerTest < ActionController::TestCase
   end
 
   def test_update_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 1, :news => { :description => '' }
     assert_response :success
     assert_template 'edit'
@@ -157,7 +157,7 @@ class NewsControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     delete :destroy, :id => 1
     assert_redirected_to '/projects/ecookbook/news'
     assert_nil News.find_by_id(1)

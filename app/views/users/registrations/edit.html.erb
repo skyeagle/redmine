@@ -1,0 +1,40 @@
+<div class="contextual">
+  <%= link_to l(:label_password_lost),
+              { :controller => 'users/passwords', :action => :create, :'user[login]' => resource.email },
+              { :class => 'icon icon-passwd', :method => :post  } %>
+</div>
+
+<h2><%=l(:button_change_password_or_email)%></h2>
+
+<%= error_messages_for resource %>
+
+<%= form_for(resource, :as => resource_name, :url => registration_path(resource_name), :html => { :method => :put, :class => 'tabular' }) do |f| %>
+  <div class="box">
+
+  <p><%= f.label :current_password do %>
+    <%= l(:field_current_password) %>&nbsp;<span class="required">*</span>
+  <% end %>
+  <%= f.password_field :current_password, :size => 30 %>&nbsp;<i>(<%= l(:text_current_password) %>)</i></p>
+  <br/>
+
+  <p><%= f.label :email do %>
+    <%= l(:field_email) %>&nbsp;<span class="required">*</span>
+  <% end %>
+  <%= f.email_field :email, :autofocus => true, :size => 30 %>
+  <em class="info"><%= l(:text_change_email) %></em></p>
+  <br/>
+
+  <p><%= f.label :password, l(:field_new_password) %>
+  <%= f.password_field :password, :autocomplete => "off", :size => 30 %>&nbsp;<i>(<%= l(:text_leave_blank) %>)</i>
+  <em class="info"><%= l(:text_caracters_minimum, :count => Setting.password_min_length) %></em></p>
+
+  <p><%= f.label :password_confirmation, l(:field_password_confirmation) %>
+  <%= f.password_field :password_confirmation, :autocomplete => "off", :size => 30 %></p>
+
+  </div>
+  <%= f.submit l(:button_apply) %>
+<% end %>
+
+<% content_for :sidebar do %>
+<%= render :partial => 'my/sidebar' %>
+<% end %>

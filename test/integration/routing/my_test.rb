@@ -25,12 +25,10 @@ class RoutingMyTest < ActionController::IntegrationTest
           { :controller => 'my', :action => 'account' }
         )
     end
-    ["get", "post"].each do |method|
-      assert_routing(
-          { :method => method, :path => "/my/account/destroy" },
-          { :controller => 'my', :action => 'destroy' }
-        )
-    end
+    assert_routing(
+      { :method => :delete, :path => "/users/register" },
+      { :controller => 'users/registrations', :action => 'destroy' }
+    )
     assert_routing(
         { :method => 'get', :path => "/my/page" },
         { :controller => 'my', :action => 'page' }
@@ -47,12 +45,22 @@ class RoutingMyTest < ActionController::IntegrationTest
         { :method => 'post', :path => "/my/reset_api_key" },
         { :controller => 'my', :action => 'reset_api_key' }
       )
-    ["get", "post"].each do |method|
-      assert_routing(
-          { :method => method, :path => "/my/password" },
-          { :controller => 'my', :action => 'password' }
-        )
-    end
+    assert_routing(
+      { :method => :get, :path => "/users/password/new" },
+      { :controller => 'users/passwords', :action => 'new' }
+    )
+    assert_routing(
+      { :method => :post, :path => "/users/password" },
+      { :controller => 'users/passwords', :action => 'create' }
+    )
+    assert_routing(
+      { :method => :get, :path => "/users/password/edit" },
+      { :controller => 'users/passwords', :action => 'edit' }
+    )
+    assert_routing(
+      { :method => :put, :path => "/users/password" },
+      { :controller => 'users/passwords', :action => 'update' }
+    )
     assert_routing(
         { :method => 'get', :path => "/my/page_layout" },
         { :controller => 'my', :action => 'page_layout' }

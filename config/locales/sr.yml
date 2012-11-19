@@ -254,7 +254,7 @@ sr:
   field_login: Корисничко име
   field_mail_notification: Обавештења путем е-поште
   field_admin: Администратор
-  field_last_login_on: Последње повезивање
+  field_last_sign_in_at: Последње повезивање
   field_language: Језик
   field_effective_date: Датум
   field_password: Лозинка

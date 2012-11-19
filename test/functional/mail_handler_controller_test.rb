@@ -24,7 +24,7 @@ class MailHandlerControllerTest < ActionController::TestCase
   FIXTURES_PATH = File.dirname(__FILE__) + '/../fixtures/mail_handler'
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_should_create_issue

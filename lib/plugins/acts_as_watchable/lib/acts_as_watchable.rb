@@ -69,7 +69,7 @@ module Redmine
 
         def notified_watchers
           notified = watcher_users.active
-          notified.reject! {|user| user.mail.blank? || user.mail_notification == 'none'}
+          notified.reject! {|user| user.email.blank? || user.mail_notification == 'none'}
           if respond_to?(:visible?)
             notified.reject! {|user| !visible?(user)}
           end
@@ -78,7 +78,7 @@ module Redmine
 
         # Returns an array of watchers' email addresses
         def watcher_recipients
-          notified_watchers.collect(&:mail)
+          notified_watchers.collect(&:email)
         end
 
         module ClassMethods; end

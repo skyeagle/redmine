@@ -21,7 +21,7 @@ class GroupsControllerTest < ActionController::TestCase
   fixtures :projects, :users, :members, :member_roles, :roles, :groups_users
 
   def setup
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
   end
 
   def test_index

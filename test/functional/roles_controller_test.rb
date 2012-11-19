@@ -21,8 +21,8 @@ class RolesControllerTest < ActionController::TestCase
   fixtures :roles, :users, :members, :member_roles, :workflows, :trackers
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 1 # admin
+    sign_out(:user)
+    sign_in users(:users_001) # admin
   end
 
   def test_index
@@ -150,7 +150,7 @@ class RolesControllerTest < ActionController::TestCase
   def test_destroy_role_in_use
     delete :destroy, :id => 1
     assert_redirected_to '/roles'
-    assert_equal 'This role is in use and cannot be deleted.', flash[:error] 
+    assert_equal 'This role is in use and cannot be deleted.', flash[:error]
     assert_not_nil Role.find_by_id(1)
   end
 

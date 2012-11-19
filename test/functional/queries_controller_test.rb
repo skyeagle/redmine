@@ -21,11 +21,11 @@ class QueriesControllerTest < ActionController::TestCase
   fixtures :projects, :users, :members, :member_roles, :roles, :trackers, :issue_statuses, :issue_categories, :enumerations, :issues, :custom_fields, :custom_values, :queries, :enabled_modules
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_new_project_query
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => 1
     assert_response :success
     assert_template 'new'
@@ -43,7 +43,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_new_global_query
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new
     assert_response :success
     assert_template 'new'
@@ -56,13 +56,13 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_new_on_invalid_project
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => 'invalid'
     assert_response 404
   end
 
   def test_create_project_public_query
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create,
          :project_id => 'ecookbook',
          :default_columns => '1',
@@ -79,7 +79,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_create_project_private_query
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create,
          :project_id => 'ecookbook',
          :default_columns => '1',
@@ -96,7 +96,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_create_global_private_query_with_custom_columns
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create,
          :fields => ["status_id", "assigned_to_id"],
          :operators => {"assigned_to_id" => "=", "status_id" => "o"},
@@ -113,7 +113,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_create_global_query_with_custom_filters
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create,
          :fields => ["assigned_to_id"],
          :operators => {"assigned_to_id" => "="},
@@ -128,7 +128,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_create_with_sort
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     post :create,
          :default_columns => '1',
          :operators => {"status_id" => "o"},
@@ -143,7 +143,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_create_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference '::Query.count' do
       post :create, :project_id => 'ecookbook', :query => {:name => ''}
     end
@@ -153,7 +153,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_edit_global_public_query
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :edit, :id => 4
     assert_response :success
     assert_template 'edit'
@@ -167,7 +167,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_edit_global_private_query
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :edit, :id => 3
     assert_response :success
     assert_template 'edit'
@@ -180,7 +180,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_edit_project_private_query
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :edit, :id => 2
     assert_response :success
     assert_template 'edit'
@@ -193,7 +193,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_edit_project_public_query
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 1
     assert_response :success
     assert_template 'edit'
@@ -208,7 +208,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_edit_sort_criteria
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :edit, :id => 5
     assert_response :success
     assert_template 'edit'
@@ -221,13 +221,13 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_edit_invalid_query
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 99
     assert_response 404
   end
 
   def test_udpate_global_private_query
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     put :update,
          :id => 3,
          :default_columns => '1',
@@ -244,7 +244,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_update_global_public_query
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     put :update,
          :id => 4,
          :default_columns => '1',
@@ -261,21 +261,21 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   def test_update_with_failure
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     put :update, :id => 4, :query => {:name => ''}
     assert_response :success
     assert_template 'edit'
   end
 
   def test_destroy
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     delete :destroy, :id => 1
     assert_redirected_to :controller => 'issues', :action => 'index', :project_id => 'ecookbook', :set_filter => 1, :query_id => nil
     assert_nil Query.find_by_id(1)
   end
 
   def test_backslash_should_be_escaped_in_filters
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :subject => 'foo/bar'
     assert_response :success
     assert_template 'new'

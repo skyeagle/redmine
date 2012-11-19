@@ -34,7 +34,7 @@ class ContextMenusControllerTest < ActionController::TestCase
            :time_entries
 
   def test_context_menu_one_issue
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
     assert_response :success
     assert_template 'context_menu'
@@ -78,7 +78,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   end
 
   def test_context_menu_multiple_issues_of_same_project
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1, 2]
     assert_response :success
     assert_template 'context_menu'
@@ -108,7 +108,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   end
 
   def test_context_menu_multiple_issues_of_different_projects
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1, 2, 6]
     assert_response :success
     assert_template 'context_menu'
@@ -136,7 +136,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   def test_context_menu_should_include_list_custom_fields
     field = IssueCustomField.create!(:name => 'List', :field_format => 'list',
       :possible_values => ['Foo', 'Bar'], :is_for_all => true, :tracker_ids => [1, 2, 3])
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
 
     assert_tag 'a',
@@ -155,7 +155,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   def test_context_menu_should_not_include_null_value_for_required_custom_fields
     field = IssueCustomField.create!(:name => 'List', :is_required => true, :field_format => 'list',
       :possible_values => ['Foo', 'Bar'], :is_for_all => true, :tracker_ids => [1, 2, 3])
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1, 2]
 
     assert_tag 'a',
@@ -170,7 +170,7 @@ class ContextMenusControllerTest < ActionController::TestCase
     issue = Issue.find(1)
     issue.custom_field_values = {field.id => 'Bar'}
     issue.save!
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
 
     assert_tag 'a',
@@ -185,7 +185,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   def test_context_menu_should_include_bool_custom_fields
     field = IssueCustomField.create!(:name => 'Bool', :field_format => 'bool',
       :is_for_all => true, :tracker_ids => [1, 2, 3])
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
 
     assert_tag 'a',
@@ -201,7 +201,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   def test_context_menu_should_include_user_custom_fields
     field = IssueCustomField.create!(:name => 'User', :field_format => 'user',
       :is_for_all => true, :tracker_ids => [1, 2, 3])
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
 
     assert_tag 'a',
@@ -216,7 +216,7 @@ class ContextMenusControllerTest < ActionController::TestCase
 
   def test_context_menu_should_include_version_custom_fields
     field = IssueCustomField.create!(:name => 'Version', :field_format => 'version', :is_for_all => true, :tracker_ids => [1, 2, 3])
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
 
     assert_tag 'a',
@@ -230,7 +230,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   end
 
   def test_context_menu_by_assignable_user_should_include_assigned_to_me_link
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :issues, :ids => [1]
     assert_response :success
     assert_template 'context_menu'
@@ -241,7 +241,7 @@ class ContextMenusControllerTest < ActionController::TestCase
   end
 
   def test_context_menu_should_propose_shared_versions_for_issues_from_different_projects
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     version = Version.create!(:name => 'Shared', :sharing => 'system', :project_id => 1)
 
     get :issues, :ids => [1, 4]
@@ -258,20 +258,20 @@ class ContextMenusControllerTest < ActionController::TestCase
     assert_template 'context_menu'
     assert_equal [1], assigns(:issues).collect(&:id)
   end
-  
+
   def test_time_entries_context_menu
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :time_entries, :ids => [1, 2]
     assert_response :success
     assert_template 'time_entries'
     assert_tag 'a', :content => 'Edit'
     assert_no_tag 'a', :content => 'Edit', :attributes => {:class => /disabled/}
   end
-  
+
   def test_time_entries_context_menu_without_edit_permission
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Role.find_by_name('Manager').remove_permission! :edit_time_entries
-    
+
     get :time_entries, :ids => [1, 2]
     assert_response :success
     assert_template 'time_entries'

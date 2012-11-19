@@ -1,0 +1,63 @@
+<h2><%=l(:label_register)%> <%=link_to l(:label_login_with_open_id_option), new_user_session_url if Setting.openid? %></h2>
+
+<%= form_for(resource, :as => resource_name, :url => registration_path(resource_name), :html => { :class => 'tabular' }) do |f| %>
+  <%= error_messages_for resource %>
+
+  <div class="box tabular">
+    <p>
+      <%= f.label :login do %>
+        <%= l(:field_login) %>&nbsp;<span class="required">*</span>
+      <% end %>
+      <%= f.text_field :login, :size => 30, :required => true %>
+    </p>
+
+    <p>
+      <%= f.label :email do %>
+        <%= l(:field_email) %>&nbsp;<span class="required">*</span>
+      <% end %>
+      <%= f.email_field :email, :size => 30, :required => true %>
+    </p>
+    <br/>
+
+    <p>
+      <%= f.label :password do %>
+        <%= l(:field_password) %>&nbsp;<span class="required">*</span>
+      <% end %>
+      <%= f.password_field :password, :size => 30, :required => true %>
+      <em class="info"><%= l(:text_caracters_minimum, :count => Setting.password_min_length) %></em>
+    </p>
+
+    <p>
+      <%= f.label :password_confirmation do %>
+          <%= l(:field_password_confirmation) %>&nbsp;<span class="required">*</span>
+      <% end %>
+      <%= f.password_field :password_confirmation, :size => 30, :required => true %>
+    </p>
+    <br/>
+
+    <p>
+      <%= f.label :firstname do %>
+          <%= l(:field_firstname) %>&nbsp;<span class="required">*</span>
+      <% end %>
+      <%= f.text_field :firstname, :required => true %>
+    </p>
+    <p>
+      <%= f.label :lastname do %>
+          <%= l(:field_lastname) %>&nbsp;<span class="required">*</span>
+      <% end %>
+      <%= f.text_field :lastname, :required => true %>
+    </p>
+    <p>
+      <%= f.label :language %>
+      <%= f.select :language, lang_options_for_select %>
+    </p>
+
+  </div>
+  <%= submit_tag l(:button_submit) %>
+<% end %>
+<br>
+<br>
+<hr>
+<h2>
+  <%= link_to t(:text_didnt_receive_confirmation_instructions), new_confirmation_path(resource_name) %>
+</h2>

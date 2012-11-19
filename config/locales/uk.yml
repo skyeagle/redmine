@@ -220,7 +220,7 @@ uk:
   field_login: Вхід
   field_mail_notification: Повідомлення за електронною поштою
   field_admin: Адміністратор
-  field_last_login_on: Останнє підключення
+  field_last_sign_in_at: Останнє підключення
   field_language: Мова
   field_effective_date: Дата
   field_password: Пароль

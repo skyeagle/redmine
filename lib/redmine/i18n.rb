@@ -94,7 +94,7 @@ module Redmine
     def languages_options
       ActionController::Base.cache_store.fetch "i18n/languages_options" do
         valid_languages.map {|lang| [ll(lang.to_s, :general_lang_name), lang.to_s]}.sort {|x,y| x.first <=> y.first }
-      end      
+      end
     end
 
     def find_language(lang)

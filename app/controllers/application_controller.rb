@@ -35,7 +35,7 @@ class ApplicationController < ActionController::Base
     cookies.delete(:autologin)
   end
 
-  before_filter :session_expiration, :user_setup, :check_if_login_required, :set_localization
+  before_filter :user_setup, :check_if_login_required, :set_localization
 
   rescue_from ActionController::InvalidAuthenticityToken, :with => :invalid_authenticity_token
   rescue_from ::Unauthorized, :with => :deny_access
@@ -45,39 +45,8 @@ class ApplicationController < ActionController::Base
   include Redmine::MenuManager::MenuController
   helper Redmine::MenuManager::MenuHelper
 
-  def session_expiration
-    if session[:user_id]
-      if session_expired? && !try_to_autologin
-        reset_session
-        flash[:error] = l(:error_session_expired)
-        redirect_to signin_url
-      else
-        session[:atime] = Time.now.utc.to_i
-      end
-    end
-  end
-
-  def session_expired?
-    if Setting.session_lifetime?
-      unless session[:ctime] && (Time.now.utc.to_i - session[:ctime].to_i <= Setting.session_lifetime.to_i * 60)
-        return true
-      end
-    end
-    if Setting.session_timeout?
-      unless session[:atime] && (Time.now.utc.to_i - session[:atime].to_i <= Setting.session_timeout.to_i * 60)
-        return true
-      end
-    end
-    false
-  end
-
-  def start_user_session(user)
-    session[:user_id] = user.id
-    session[:ctime] = Time.now.utc.to_i
-    session[:atime] = Time.now.utc.to_i
-  end
-
   def user_setup
+    sign_out(:user) if api_request?
     # Check the settings cache for each request
     Setting.check_cache
     # Find the current user
@@ -89,70 +58,26 @@ class ApplicationController < ActionController::Base
   # and starts a session if needed
   def find_current_user
     user = nil
-    unless api_request?
-      if session[:user_id]
-        # existing session
-        user = (User.active.find(session[:user_id]) rescue nil)
-      elsif autologin_user = try_to_autologin
-        user = autologin_user
-      elsif params[:format] == 'atom' && params[:key] && request.get? && accept_rss_auth?
-        # RSS key authentication does not start a session
-        user = User.find_by_rss_key(params[:key])
-      end
-    end
-    if user.nil? && Setting.rest_api_enabled? && accept_api_auth?
-      if (key = api_key_from_request)
-        # Use API key
-        user = User.find_by_api_key(key)
+    user = current_user
+    # Switch user if requested by an admin user
+    if user && user.admin? && (username = api_switch_user_from_request)
+      su = User.find_by_login(username)
+      if su && su.active?
+        logger.info("  User switched by: #{user.login} (id=#{user.id})") if logger
+        user = su
       else
-        # HTTP Basic, either username/password or API key/random
-        authenticate_with_http_basic do |username, password|
-          user = User.try_to_login(username, password) || User.find_by_api_key(username)
-        end
-      end
-      # Switch user if requested by an admin user
-      if user && user.admin? && (username = api_switch_user_from_request)
-        su = User.find_by_login(username)
-        if su && su.active?
-          logger.info("  User switched by: #{user.login} (id=#{user.id})") if logger
-          user = su
-        else
-          render_error :message => 'Invalid X-Redmine-Switch-User header', :status => 412
-        end
+        render_error :message => 'Invalid X-Redmine-Switch-User header', :status => 412
       end
     end
     user
   end
 
-  def try_to_autologin
-    if cookies[:autologin] && Setting.autologin?
-      # auto-login feature starts a new session
-      user = User.try_to_autologin(cookies[:autologin])
-      if user
-        reset_session
-        start_user_session(user)
-      end
-      user
-    end
-  end
-
   # Sets the logged in user
   def logged_user=(user)
-    reset_session
     if user && user.is_a?(User)
       User.current = user
-      start_user_session(user)
     else
       User.current = User.anonymous
-    end
-  end
-
-  # Logs out current user
-  def logout_user
-    if User.current.logged?
-      cookies.delete :autologin
-      Token.delete_all(["user_id = ? AND action = ?", User.current.id, 'autologin'])
-      self.logged_user = nil
     end
   end
 
@@ -177,26 +102,6 @@ class ApplicationController < ActionController::Base
     end
     lang ||= Setting.default_language
     set_language_if_valid(lang)
-  end
-
-  def require_login
-    if !User.current.logged?
-      # Extract only the basic url parameters on non-GET requests
-      if request.get?
-        url = url_for(params)
-      else
-        url = url_for(:controller => params[:controller], :action => params[:action], :id => params[:id], :project_id => params[:project_id])
-      end
-      respond_to do |format|
-        format.html { redirect_to :controller => "account", :action => "login", :back_url => url }
-        format.atom { redirect_to :controller => "account", :action => "login", :back_url => url }
-        format.xml  { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
-        format.js   { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
-        format.json { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
-      end
-      return false
-    end
-    true
   end
 
   def require_admin
@@ -325,22 +230,28 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_back_or_default(default)
-    back_url = params[:back_url].to_s
-    if back_url.present?
+    if redirect_back_path
+      redirect_to redirect_back_path
+    else
+      redirect_to(default)
+    end
+    false
+  end
+
+  def redirect_back_path
+    if (back_url = params[:back_url]) && back_url.present?
       begin
         uri = URI.parse(back_url)
         # do not redirect user to another host or to the login or register page
-        if (uri.relative? || (uri.host == request.host)) && !uri.path.match(%r{/(login|account/register)})
-          redirect_to(back_url)
-          return
+        if (uri.relative? || (uri.host == request.host)) && !uri.path.match(%r{/(sign_in|account/registration)})
+          back_url
         end
       rescue URI::InvalidURIError
         logger.warn("Could not redirect to invalid URL #{back_url}")
         # redirect to default
+        nil
       end
     end
-    redirect_to default
-    false
   end
 
   # Redirects to the request referer if present, redirects to args or call block otherwise.
@@ -434,20 +345,12 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def accept_rss_auth?(action=action_name)
-    self.class.accept_rss_auth.include?(action.to_sym)
-  end
-
   def self.accept_api_auth(*actions)
     if actions.any?
       self.accept_api_auth_actions = actions
     else
       self.accept_api_auth_actions || []
     end
-  end
-
-  def accept_api_auth?(action=action_name)
-    self.class.accept_api_auth.include?(action.to_sym)
   end
 
   # Returns the number of objects that should be displayed
@@ -519,15 +422,6 @@ class ApplicationController < ActionController::Base
     %w(xml json).include? params[:format]
   end
 
-  # Returns the API key present in the request
-  def api_key_from_request
-    if params[:key].present?
-      params[:key].to_s
-    elsif request.headers["X-Redmine-API-Key"].present?
-      request.headers["X-Redmine-API-Key"].to_s
-    end
-  end
-
   # Returns the API 'switch user' value if present
   def api_switch_user_from_request
     request.headers["X-Redmine-Switch-User"].to_s.presence
@@ -586,5 +480,30 @@ class ApplicationController < ActionController::Base
   # doesn't use the layout for api requests
   def _include_layout?(*args)
     api_request? ? false : super
+  end
+
+  def after_sign_in_path_for(resource_or_scope)
+    redirect_back_path || signed_in_root_path(resource_or_scope)
+  end
+
+  alias_method :require_login, :authenticate_user!
+
+  def sign_in *args
+    super && self.logged_user = current_user
+  end
+
+  def sign_out *args
+    super && self.logged_user = nil
+  end
+
+  def check_registration_enabled!
+    if registration_disabled?
+      redirect_to new_user_session_path
+      return false
+    end
+  end
+
+  def registration_disabled?
+    Setting.self_registration == '0'
   end
 end

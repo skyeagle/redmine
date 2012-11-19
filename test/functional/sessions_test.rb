@@ -18,100 +18,25 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class SessionStartTest < ActionController::TestCase
-  tests AccountController
+  tests Users::SessionsController
 
   fixtures :users
+
+  def setup
+    @request.env["devise.mapping"] = Devise.mappings[:user]
+  end
 
   def test_login_should_set_session_timestamps
-    post :login, :username => 'jsmith', :password => 'jsmith'
+    user = User.find_by_login('jsmith')
+    last_sign_in_at = user.last_sign_in_at
+
+    post :create, :user => { :login => user.login, :password => user.login }
     assert_response 302
-    assert_equal 2, session[:user_id]
-    assert_not_nil session[:ctime]
-    assert_not_nil session[:atime]
-  end
-end
-
-class SessionsTest < ActionController::TestCase
-  tests WelcomeController
-
-  fixtures :users
-
-  def test_atime_from_user_session_should_be_updated
-    created = 2.hours.ago.utc.to_i
-    get :index, {}, {:user_id => 2, :ctime => created, :atime => created}
-    assert_response :success
-    assert_equal created, session[:ctime]
-    assert_not_equal created, session[:atime]
-    assert session[:atime] > created
-  end
-
-  def test_user_session_should_not_be_reset_if_lifetime_and_timeout_disabled
-    with_settings :session_lifetime => '0', :session_timeout => '0' do
-      get :index, {}, {:user_id => 2}
-      assert_response :success
-    end
-  end
-
-  def test_user_session_without_ctime_should_be_reset_if_lifetime_enabled
-    with_settings :session_lifetime => '720' do
-      get :index, {}, {:user_id => 2}
-      assert_redirected_to '/login'
-    end
-  end
-
-  def test_user_session_with_expired_ctime_should_be_reset_if_lifetime_enabled
-    with_settings :session_timeout => '720' do
-      get :index, {}, {:user_id => 2, :atime => 2.days.ago.utc.to_i}
-      assert_redirected_to '/login'
-    end
-  end
-
-  def test_user_session_with_valid_ctime_should_not_be_reset_if_lifetime_enabled
-    with_settings :session_timeout => '720' do
-      get :index, {}, {:user_id => 2, :atime => 3.hours.ago.utc.to_i}
-      assert_response :success
-    end
-  end
-
-  def test_user_session_without_atime_should_be_reset_if_timeout_enabled
-    with_settings :session_timeout => '60' do
-      get :index, {}, {:user_id => 2}
-      assert_redirected_to '/login'
-    end
-  end
-
-  def test_user_session_with_expired_atime_should_be_reset_if_timeout_enabled
-    with_settings :session_timeout => '60' do
-      get :index, {}, {:user_id => 2, :atime => 4.hours.ago.utc.to_i}
-      assert_redirected_to '/login'
-    end
-  end
-
-  def test_user_session_with_valid_atime_should_not_be_reset_if_timeout_enabled
-    with_settings :session_timeout => '60' do
-      get :index, {}, {:user_id => 2, :atime => 10.minutes.ago.utc.to_i}
-      assert_response :success
-    end
-  end
-
-  def test_expired_user_session_should_be_restarted_if_autologin
-    with_settings :session_lifetime => '720', :session_timeout => '60', :autologin => 7 do
-      token = Token.create!(:user_id => 2, :action => 'autologin', :created_on => 1.day.ago)
-      @request.cookies['autologin'] = token.value
-      created = 2.hours.ago.utc.to_i
-
-      get :index, {}, {:user_id => 2, :ctime => created, :atime => created}
-      assert_equal 2, session[:user_id]
-      assert_response :success
-      assert_not_equal created, session[:ctime]
-      assert session[:ctime] >= created
-    end
-  end
-
-  def test_anonymous_session_should_not_be_reset
-    with_settings :session_lifetime => '720', :session_timeout => '60' do
-      get :index
-      assert_response :success
-    end
+    assert_equal [user.id], request.session['warden.user.user.key'][1]
+    user.reload
+    assert_not_equal last_sign_in_at, user.last_sign_in_at
+    assert_not_nil user.current_sign_in_at
+    assert_not_nil user.current_sign_in_ip
+    assert_not_nil user.last_sign_in_ip
   end
 end

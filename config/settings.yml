@@ -36,10 +36,6 @@ unsubscribe:
 password_min_length:
   format: int
   default: 8
-# Maximum lifetime of user sessions in minutes
-session_lifetime:
-  format: int
-  default: 0
 # User session timeout in minutes
 session_timeout:
   format: int
@@ -123,6 +119,8 @@ commit_logtime_activity_id:
 autologin:
   format: int
   default: 0
+extend_autologin:
+  default: 1
 # date format
 date_format:
   default: ''

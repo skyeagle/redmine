@@ -252,7 +252,7 @@ pt-BR:
   field_login: Usuário
   field_mail_notification: Notificações por e-mail
   field_admin: Administrador
-  field_last_login_on: Última conexão
+  field_last_sign_in_at: Última conexão
   field_language: Idioma
   field_effective_date: Data
   field_password: Senha

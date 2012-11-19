@@ -229,7 +229,7 @@ sk:
   field_login: Login
   field_mail_notification: Emailové oznámenie
   field_admin: Administrátor
-  field_last_login_on: Posledné prihlásenie
+  field_last_sign_in_at: Posledné prihlásenie
   field_language: Jazyk
   field_effective_date: Dátum
   field_password: Heslo

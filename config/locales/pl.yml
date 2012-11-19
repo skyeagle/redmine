@@ -259,7 +259,7 @@ pl:
   field_issue: Zagadnienie
   field_issue_to: Powiązania zagadnienia
   field_language: Język
-  field_last_login_on: Ostatnie połączenie
+  field_last_sign_in_at: Ostatnie połączenie
   field_lastname: Nazwisko
   field_login: Login
   field_mail: Email

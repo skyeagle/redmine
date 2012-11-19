@@ -242,7 +242,7 @@ nl:
   field_issue: Issue
   field_issue_to: Gerelateerd issue
   field_language: Taal
-  field_last_login_on: Laatste bezoek
+  field_last_sign_in_at: Laatste bezoek
   field_lastname: Achternaam
   field_login: Gebruikersnaam
   field_mail: E-mail

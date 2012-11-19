@@ -225,7 +225,7 @@ en:
   field_is_required: Required
   field_firstname: First name
   field_lastname: Last name
-  field_mail: Email
+  field_email: Email
   field_filename: File
   field_filesize: Size
   field_downloads: Downloads
@@ -261,11 +261,13 @@ en:
   field_parent: Subproject of
   field_is_in_roadmap: Issues displayed in roadmap
   field_login: Login
+  field_login_or_email: Login or email
   field_mail_notification: Email notifications
   field_admin: Administrator
-  field_last_login_on: Last connection
+  field_last_sign_in_at: Last connection
   field_language: Language
   field_effective_date: Date
+  field_current_password: Current password
   field_password: Password
   field_new_password: New password
   field_password_confirmation: Confirmation
@@ -354,6 +356,7 @@ en:
   setting_commit_ref_keywords: Referencing keywords
   setting_commit_fix_keywords: Fixing keywords
   setting_autologin: Autologin
+  setting_extend_autologin: Extend autologin session
   setting_date_format: Date format
   setting_time_format: Time format
   setting_cross_project_issue_relations: Allow cross-project issue relations
@@ -927,7 +930,7 @@ en:
   button_unarchive: Unarchive
   button_reset: Reset
   button_rename: Rename
-  button_change_password: Change password
+  button_change_password_or_email: Change password or email
   button_copy: Copy
   button_copy_and_follow: Copy and follow
   button_annotate: Annotate
@@ -957,6 +960,8 @@ en:
 
   field_active: Active
 
+  text_didnt_receive_confirmation_instructions: "Didn't receive confirmation instructions?"
+  text_resend_confirmation_instructions: "Resend confirmation instructions"
   text_select_mail_notifications: Select actions for which email notifications should be sent.
   text_regexp_info: eg. ^[A-Z0-9]+$
   text_min_max_length_info: 0 means no restriction
@@ -1010,6 +1015,9 @@ en:
   text_email_delivery_not_configured: "Email delivery is not configured, and notifications are disabled.\nConfigure your SMTP server in config/configuration.yml and restart the application to enable them."
   text_repository_usernames_mapping: "Select or update the Redmine user mapped to each username found in the repository log.\nUsers with the same Redmine and repository username or email are automatically mapped."
   text_diff_truncated: '... This diff was truncated because it exceeds the maximum size that can be displayed.'
+  text_leave_blank: "leave blank if you don't want to change it"
+  text_current_password: we need your current password to confirm your changes
+  text_change_email: Any email changes requires to be confirmed
   text_custom_field_possible_values_info: 'One line for each value'
   text_wiki_page_destroy_question: "This page has %{descendants} child page(s) and descendant(s). What do you want to do?"
   text_wiki_page_nullify_children: "Keep child pages as root pages"
@@ -1078,3 +1086,59 @@ en:
   description_date_from: Enter start date
   description_date_to: Enter end date
   text_repository_identifier_info: 'Only lower case letters (a-z), numbers, dashes and underscores are allowed.<br />Once saved, the identifier cannot be changed.'
+
+  # Devise translations
+  errors:
+    messages:
+      expired: "has expired, please request a new one"
+      not_found: "not found"
+      already_confirmed: "was already confirmed, please try signing in"
+      not_locked: "was not locked"
+      not_saved:
+        one: "1 error prohibited this %{resource} from being saved:"
+        other: "%{count} errors prohibited this %{resource} from being saved:"
+  devise:
+    failure:
+      already_authenticated: 'You are already signed in.'
+      unauthenticated: 'You need to sign in or sign up before continuing.'
+      unconfirmed: 'You have to confirm your account before continuing.'
+      locked: 'Your account is locked.'
+      invalid: 'Invalid login/email or password.'
+      invalid_token: 'Invalid authentication token.'
+      timeout: 'Your session expired, please sign in again to continue.'
+      inactive: 'Your account was not activated yet.'
+    sessions:
+      signed_in: 'Signed in successfully.'
+      signed_out: 'Signed out successfully.'
+    passwords:
+      send_instructions: 'You will receive an email with instructions about how to reset your password in a few minutes.'
+      updated: 'Your password was changed successfully. You are now signed in.'
+      updated_not_active: 'Your password was changed successfully.'
+      send_paranoid_instructions: "If your email address exists in our database, you will receive a password recovery link at your email address in a few minutes."
+      no_token: "You can't access this page without coming from a password reset email. If you do come from a password reset email, please make sure you used the full URL provided."
+    confirmations:
+      send_instructions: 'You will receive an email with instructions about how to confirm your account in a few minutes.'
+      send_paranoid_instructions: 'If your email address exists in our database, you will receive an email with instructions about how to confirm your account in a few minutes.'
+      confirmed: 'Your account was successfully confirmed. You are now signed in.'
+    registrations:
+      signed_up: 'Welcome! You have signed up successfully.'
+      signed_up_but_unconfirmed: 'A message with a confirmation link has been sent to your email address. Please open the link to activate your account.'
+      signed_up_but_inactive: 'You have signed up successfully. However, we could not sign you in because your account is not yet activated.'
+      signed_up_but_locked: 'You have signed up successfully. However, we could not sign you in because your account is locked.'
+      updated: 'You updated your account successfully.'
+      update_needs_confirmation: "You updated your account successfully, but we need to verify your new email address. Please check your email and click on the confirm link to finalize confirming your new email address."
+      destroyed: 'Bye! Your account was successfully cancelled. We hope to see you again soon.'
+    unlocks:
+      send_instructions: 'You will receive an email with instructions about how to unlock your account in a few minutes.'
+      unlocked: 'Your account has been unlocked successfully. Please sign in to continue.'
+      send_paranoid_instructions: 'If your account exists, you will receive an email with instructions about how to unlock it in a few minutes.'
+    omniauth_callbacks:
+      success: 'Successfully authenticated from %{kind} account.'
+      failure: 'Could not authenticate you from %{kind} because "%{reason}".'
+    mailer:
+      confirmation_instructions:
+        subject: 'Confirmation instructions'
+      reset_password_instructions:
+        subject: 'Reset password instructions'
+      unlock_instructions:
+        subject: 'Unlock Instructions'

@@ -18,7 +18,7 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class UserTest < ActiveSupport::TestCase
-  fixtures :users, :members, :projects, :roles, :member_roles, :auth_sources,
+  fixtures :users, :members, :projects, :roles, :member_roles,
             :trackers, :issue_statuses,
             :projects_trackers,
             :watchers,
@@ -45,21 +45,21 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_mail_should_be_stripped
-    u = User.new
-    u.mail = " foo@bar.com  "
-    assert_equal "foo@bar.com", u.mail
+    u = User.generate!(:email => " foo@bar.com ")
+    assert_equal "foo@bar.com", u.email
   end
 
   def test_mail_validation
     u = User.new
-    u.mail = ''
+    u.email = ''
     assert !u.valid?
-    assert_include I18n.translate('activerecord.errors.messages.blank'), u.errors[:mail]
+    assert_include I18n.translate('activerecord.errors.messages.blank'), u.errors[:email]
   end
 
   def test_login_length_validation
-    user = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
-    user.login = "x" * (User::LOGIN_LENGTH_LIMIT+1)
+    user = User.generate do |u|
+      u.login = "x" * (User::LOGIN_LENGTH_LIMIT+1)
+    end
     assert !user.valid?
 
     user.login = "x" * (User::LOGIN_LENGTH_LIMIT)
@@ -68,7 +68,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_create
-    user = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
+    user = User.new(:firstname => "new", :lastname => "user", :email => "newuser@somenet.foo")
 
     user.login = "jsmith"
     user.password, user.password_confirmation = "password", "password"
@@ -96,11 +96,11 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_user_login_should_be_case_insensitive
-    u = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
+    u = User.new(:firstname => "new", :lastname => "user", :email => "newuser@somenet.foo")
     u.login = 'newuser'
     u.password, u.password_confirmation = "password", "password"
     assert u.save
-    u = User.new(:firstname => "Similar", :lastname => "User", :mail => "similaruser@somenet.foo")
+    u = User.new(:firstname => "Similar", :lastname => "User", :email => "similaruser@somenet.foo")
     u.login = 'NewUser'
     u.password, u.password_confirmation = "password", "password"
     assert !u.save
@@ -108,16 +108,12 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_mail_uniqueness_should_not_be_case_sensitive
-    u = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
-    u.login = 'newuser1'
-    u.password, u.password_confirmation = "password", "password"
+    u = User.generate!(:email => 'newUser@somenet.foo')
     assert u.save
 
-    u = User.new(:firstname => "new", :lastname => "user", :mail => "newUser@Somenet.foo")
-    u.login = 'newuser2'
-    u.password, u.password_confirmation = "password", "password"
+    u = User.generate(:email => 'newUser@Somenet.foo')
     assert !u.save
-    assert_include I18n.translate('activerecord.errors.messages.taken'), u.errors[:mail]
+    assert_include I18n.translate('activerecord.errors.messages.taken'), u.errors[:email]
   end
 
   def test_update
@@ -129,12 +125,10 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_update_should_not_fail_for_legacy_user_with_different_case_logins
-    u1 = User.new(:firstname => "new", :lastname => "user", :mail => "newuser1@somenet.foo")
-    u1.login = 'newuser1'
+    u1 = User.generate :login => 'newuser1'
     assert u1.save
 
-    u2 = User.new(:firstname => "new", :lastname => "user", :mail => "newuser2@somenet.foo")
-    u2.login = 'newuser1'
+    u2 = User.generate :login => 'newuser1'
     assert u2.save(:validate => false)
 
     user = User.find(u2.id)
@@ -366,9 +360,9 @@ class UserTest < ActiveSupport::TestCase
     assert_not_nil u.errors[:mail_notification]
   end
 
-  context "User#try_to_login" do
+  context "User#find_first_by_auth_conditions" do
     should "fall-back to case-insensitive if user login is not found as-typed." do
-      user = User.try_to_login("AdMin", "admin")
+      user = User.find_first_by_auth_conditions(:login => "AdMin")
       assert_kind_of User, user
       assert_equal "admin", user.login
     end
@@ -378,9 +372,10 @@ class UserTest < ActiveSupport::TestCase
         user.password = "admin123"
       end
       # bypass validations to make it appear like existing data
-      case_sensitive_user.update_attribute(:login, 'ADMIN')
+      case_sensitive_user.login = 'ADMIN'
+      case_sensitive_user.save(:validate => false)
 
-      user = User.try_to_login("ADMIN", "admin123")
+      user = User.find_first_by_auth_conditions(:login => "ADMIN")
       assert_kind_of User, user
       assert_equal "ADMIN", user.login
 
@@ -388,25 +383,26 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_password
-    user = User.try_to_login("admin", "admin")
+    user = users(:users_001)
+    assert user.valid_password?('admin')
+    assert_equal user, User.find_first_by_auth_conditions(:login => 'admin')
     assert_kind_of User, user
     assert_equal "admin", user.login
-    user.password = "hello123"
-    assert user.save
+    assert user.reset_password!('hello123', 'hello123')
 
-    user = User.try_to_login("admin", "hello123")
+    user.reload
+    assert user.valid_password?('hello123')
+    assert_equal user, User.find_first_by_auth_conditions(:login => 'admin')
     assert_kind_of User, user
     assert_equal "admin", user.login
   end
 
   def test_validate_password_length
-    with_settings :password_min_length => '100' do
-      user = User.new(:firstname => "new100", :lastname => "user100", :mail => "newuser100@somenet.foo")
-      user.login = "newuser100"
-      user.password, user.password_confirmation = "password100", "password100"
-      assert !user.save
-      assert_equal 1, user.errors.count
-    end
+    user = User.new(:firstname => "new100", :lastname => "user100", :email => "newuser100@somenet.foo")
+    user.login = "newuser100"
+    user.password, user.password_confirmation = "ok", "ok"
+    assert !user.save
+    assert_equal 1, user.errors.count
   end
 
   def test_name_format
@@ -459,19 +455,19 @@ class UserTest < ActiveSupport::TestCase
       assert_equal ['users.lastname', 'users.firstname', 'users.id'], User.fields_for_order_statement
     end
   end
-  
+
   def test_fields_for_order_statement_width_table_name_should_prepend_table_name
     with_settings :user_format => 'lastname_firstname' do
       assert_equal ['authors.lastname', 'authors.firstname', 'authors.id'], User.fields_for_order_statement('authors')
     end
   end
-  
+
   def test_fields_for_order_statement_with_blank_format_should_return_default
     with_settings :user_format => '' do
       assert_equal ['users.firstname', 'users.lastname', 'users.id'], User.fields_for_order_statement
     end
   end
-  
+
   def test_fields_for_order_statement_with_invalid_format_should_return_default
     with_settings :user_format => 'foo' do
       assert_equal ['users.firstname', 'users.lastname', 'users.id'], User.fields_for_order_statement
@@ -479,128 +475,33 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_lock
-    user = User.try_to_login("jsmith", "jsmith")
+    user = User.find_for_database_authentication(:login => "jsmith")
     assert_equal @jsmith, user
 
     @jsmith.status = User::STATUS_LOCKED
     assert @jsmith.save
 
-    user = User.try_to_login("jsmith", "jsmith")
+    user = User.find_for_database_authentication(:login => "jsmith")
     assert_equal nil, user
   end
 
-  context ".try_to_login" do
+  context "authentication" do
     context "with good credentials" do
       should "return the user" do
-        user = User.try_to_login("admin", "admin")
+        user = User.find_first_by_auth_conditions(:login => "admin")
         assert_kind_of User, user
+        assert user.valid_password?('admin')
         assert_equal "admin", user.login
       end
     end
 
     context "with wrong credentials" do
       should "return nil" do
-        assert_nil User.try_to_login("admin", "foo")
+        user = User.find_first_by_auth_conditions(:login => "admin")
+        assert_kind_of User, user
+        assert !user.valid_password?('foo')
       end
     end
-  end
-
-  if ldap_configured?
-    context "#try_to_login using LDAP" do
-      context "with failed connection to the LDAP server" do
-        should "return nil" do
-          @auth_source = AuthSourceLdap.find(1)
-          AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::LdapError, 'Cannot connect')
-
-          assert_equal nil, User.try_to_login('edavis', 'wrong')
-        end
-      end
-
-      context "with an unsuccessful authentication" do
-        should "return nil" do
-          assert_equal nil, User.try_to_login('edavis', 'wrong')
-        end
-      end
-
-      context "binding with user's account" do
-        setup do
-          @auth_source = AuthSourceLdap.find(1)
-          @auth_source.account = "uid=$login,ou=Person,dc=redmine,dc=org"
-          @auth_source.account_password = ''
-          @auth_source.save!
-
-          @ldap_user = User.new(:mail => 'example1@redmine.org', :firstname => 'LDAP', :lastname => 'user', :auth_source_id => 1)
-          @ldap_user.login = 'example1'
-          @ldap_user.save!
-        end
-
-        context "with a successful authentication" do
-          should "return the user" do
-            assert_equal @ldap_user, User.try_to_login('example1', '123456')
-          end
-        end
-
-        context "with an unsuccessful authentication" do
-          should "return nil" do
-            assert_nil User.try_to_login('example1', '11111')
-          end
-        end
-      end
-
-      context "on the fly registration" do
-        setup do
-          @auth_source = AuthSourceLdap.find(1)
-          @auth_source.update_attribute :onthefly_register, true
-        end
-
-        context "with a successful authentication" do
-          should "create a new user account if it doesn't exist" do
-            assert_difference('User.count') do
-              user = User.try_to_login('edavis', '123456')
-              assert !user.admin?
-            end
-          end
-
-          should "retrieve existing user" do
-            user = User.try_to_login('edavis', '123456')
-            user.admin = true
-            user.save!
-
-            assert_no_difference('User.count') do
-              user = User.try_to_login('edavis', '123456')
-              assert user.admin?
-            end
-          end
-        end
-
-        context "binding with user's account" do
-          setup do
-            @auth_source = AuthSourceLdap.find(1)
-            @auth_source.account = "uid=$login,ou=Person,dc=redmine,dc=org"
-            @auth_source.account_password = ''
-            @auth_source.save!
-          end
-  
-          context "with a successful authentication" do
-            should "create a new user account if it doesn't exist" do
-              assert_difference('User.count') do
-                user = User.try_to_login('example1', '123456')
-                assert_kind_of User, user
-              end
-            end
-          end
-  
-          context "with an unsuccessful authentication" do
-            should "return nil" do
-              assert_nil User.try_to_login('example1', '11111')
-            end
-          end
-        end
-      end
-    end
-
-  else
-    puts "Skipping LDAP tests."
   end
 
   def test_create_anonymous
@@ -617,7 +518,7 @@ class UserTest < ActiveSupport::TestCase
     assert_kind_of AnonymousUser, anon1
     anon2 = AnonymousUser.create(
                 :lastname => 'Anonymous', :firstname => '',
-                :mail => '', :login => '', :status => 0)
+                :email => '', :login => '', :status => 0)
     assert_equal 1, anon2.errors.count
   end
 
@@ -683,7 +584,7 @@ class UserTest < ActiveSupport::TestCase
     end
 
     should "return the user if the key is found for an active user" do
-      user = User.generate!
+      user = User.generate! {|u| u.activate}
       token = Token.create!(:action => 'api')
       user.api_token = token
       user.save
@@ -702,8 +603,7 @@ class UserTest < ActiveSupport::TestCase
 
   def test_default_admin_account_changed_should_return_true_if_password_was_changed
     user = User.find_by_login("admin")
-    user.password = "newpassword"
-    user.save!
+    user.reset_password! "newpassword", "newpassword"
 
     assert_equal true, User.default_admin_account_changed?
   end
@@ -776,7 +676,7 @@ class UserTest < ActiveSupport::TestCase
     @jsmith.notified_project_ids = []
     @jsmith.save
     @jsmith.reload
-    assert @jsmith.projects.first.recipients.include?(@jsmith.mail)
+    assert @jsmith.projects.first.recipients.include?(@jsmith.email)
   end
 
   def test_mail_notification_selected
@@ -784,7 +684,7 @@ class UserTest < ActiveSupport::TestCase
     @jsmith.notified_project_ids = [1]
     @jsmith.save
     @jsmith.reload
-    assert Project.find(1).recipients.include?(@jsmith.mail)
+    assert Project.find(1).recipients.include?(@jsmith.email)
   end
 
   def test_mail_notification_only_my_events
@@ -792,7 +692,7 @@ class UserTest < ActiveSupport::TestCase
     @jsmith.notified_project_ids = []
     @jsmith.save
     @jsmith.reload
-    assert !@jsmith.projects.first.recipients.include?(@jsmith.mail)
+    assert !@jsmith.projects.first.recipients.include?(@jsmith.email)
   end
 
   def test_comments_sorting_preference
@@ -803,42 +703,18 @@ class UserTest < ActiveSupport::TestCase
     assert @jsmith.wants_comments_in_reverse_order?
   end
 
-  def test_find_by_mail_should_be_case_insensitive
-    u = User.find_by_mail('JSmith@somenet.foo')
+  def test_find_by_email_should_be_case_insensitive
+    u = User.find_by_email('JSmith@somenet.foo')
     assert_not_nil u
-    assert_equal 'jsmith@somenet.foo', u.mail
+    assert_equal 'jsmith@somenet.foo', u.email
   end
 
   def test_random_password
     u = User.new
-    u.random_password
+    p = Devise.friendly_token[0,20]
+    u.password, u.password_confirmation = p, p
     assert !u.password.blank?
     assert !u.password_confirmation.blank?
-  end
-
-  context "#change_password_allowed?" do
-    should "be allowed if no auth source is set" do
-      user = User.generate!
-      assert user.change_password_allowed?
-    end
-
-    should "delegate to the auth source" do
-      user = User.generate!
-
-      allowed_auth_source = AuthSource.generate!
-      def allowed_auth_source.allow_password_changes?; true; end
-
-      denied_auth_source = AuthSource.generate!
-      def denied_auth_source.allow_password_changes?; false; end
-
-      assert user.change_password_allowed?
-
-      user.auth_source = allowed_auth_source
-      assert user.change_password_allowed?, "User not allowed to change password, though auth source does"
-
-      user.auth_source = denied_auth_source
-      assert !user.change_password_allowed?, "User allowed to change password, though auth source does not"
-    end
   end
 
   def test_own_account_deletable_should_be_true_with_unsubscrive_enabled
@@ -863,6 +739,7 @@ class UserTest < ActiveSupport::TestCase
 
   def test_own_account_deletable_should_be_true_for_an_admin_if_other_admin_exists
     User.generate! do |user|
+      user.activate
       user.admin = true
     end
 
@@ -876,19 +753,19 @@ class UserTest < ActiveSupport::TestCase
       should "return false if project is archived" do
         project = Project.find(1)
         Project.any_instance.stubs(:status).returns(Project::STATUS_ARCHIVED)
-        assert_equal false, @admin.allowed_to?(:view_issues, Project.find(1))
+        assert_equal false, @admin.allowed_to?(:view_issues, project)
       end
 
       should "return false for write action if project is closed" do
         project = Project.find(1)
         Project.any_instance.stubs(:status).returns(Project::STATUS_CLOSED)
-        assert_equal false, @admin.allowed_to?(:edit_project, Project.find(1))
+        assert_equal false, @admin.allowed_to?(:edit_project, project)
       end
 
       should "return true for read action if project is closed" do
         project = Project.find(1)
         Project.any_instance.stubs(:status).returns(Project::STATUS_CLOSED)
-        assert_equal true, @admin.allowed_to?(:view_project, Project.find(1))
+        assert_equal true, @admin.allowed_to?(:view_project, project)
       end
 
       should "return false if related module is disabled" do
@@ -1023,53 +900,151 @@ class UserTest < ActiveSupport::TestCase
   def test_salt_unsalted_passwords
     # Restore a user with an unsalted password
     user = User.find(1)
-    user.salt = nil
-    user.hashed_password = User.hash_password("unsalted")
+    user.password_salt = nil
+    user.encrypted_password = User.encryptor_class.hash_password("unsalted")
     user.save!
 
     User.salt_unsalted_passwords!
 
     user.reload
     # Salt added
-    assert !user.salt.blank?
+    assert !user.password_salt.blank?
     # Password still valid
-    assert user.check_password?("unsalted")
-    assert_equal user, User.try_to_login(user.login, "unsalted")
+    assert user.valid_password?("unsalted")
   end
 
-  if Object.const_defined?(:OpenID)
+  context "Open ID" do
 
-  def test_setting_identity_url
-    normalized_open_id_url = 'http://example.com/'
-    u = User.new( :identity_url => 'http://example.com/' )
-    assert_equal normalized_open_id_url, u.identity_url
+    def test_find_for_open_id_on_nil_data
+      with_settings :openid => 1, :self_registration => 3 do
+        assert_nil User.find_for_open_id(nil)
+      end
+    end
+
+    def test_find_for_open_id_by_blank_identity_url
+      with_settings :openid => 1, :self_registration => 0 do
+        @user_data = OpenStruct.new
+        @user_data.uid = ''
+        assert_nil User.find_for_open_id(@user_data)
+      end
+    end
+
+    def test_find_for_open_id_by_nil_identity_url
+      with_settings :openid => 1, :self_registration => 0 do
+        @user_data = OpenStruct.new
+        @user_data.uid = nil
+        assert_nil User.find_for_open_id(@user_data)
+      end
+    end
+
+    def test_find_for_open_id_when_openid_disabled
+      (1..3).to_a.each do |i|
+        with_settings :openid => 0, :self_registration => i do
+          @existen_user = users(:users_002)
+          @existen_user_data = OpenStruct.new
+          @existen_user_data.uid = @existen_user.identity_url
+          assert @existen_user_data
+          assert_nil User.find_for_open_id(@existen_user_data)
+        end
+      end
+    end
+
+    def test_find_for_openid_when_self_registration_disabled
+      with_settings :openid => 1, :self_registration => 0 do
+        @existen_user = users(:users_002)
+        @existen_user_data = OpenStruct.new
+        @existen_user_data.uid = @existen_user.identity_url
+        assert @existen_user_data
+        assert_equal @existen_user, User.find_for_open_id(@existen_user_data)
+      end
+    end
+
+    def test_find_for_openid_when_self_registration_disabled_and_user_not_exist
+      with_settings :openid => 1, :self_registration => 0 do
+        @user_data = OpenStruct.new
+        @user_data.uid = 'http://uid.example.net'
+        @user_data.info = {
+          :email => 'abc@abc.ru',
+          :nickname => 'unexistent',
+          :name => 'Ghost Man'
+        }
+        assert @user_data
+        assert_nil User.find_for_open_id(@user_data)
+      end
+    end
+
+    def test_find_for_openid_when_open_id_enabled_and_user_exist
+      with_settings :openid => 1 do
+        @existen_user = users(:users_002)
+        @existen_user_data = OpenStruct.new
+        @existen_user_data.uid = @existen_user.identity_url
+        assert_equal @existen_user, User.find_for_open_id(@existen_user_data)
+      end
+    end
+
+    def test_find_for_openid_with_activation_by_email_when_user_not_exist
+      with_settings :openid => 1, :self_registration => 1 do
+        @user_data = OpenStruct.new
+        @user_data.uid = 'http://uid.example.net'
+        @user_data.info = {
+          :email => 'abc@abc.ru',
+          :nickname => 'unexistent',
+          :name => 'Ghost Man'
+        }
+        created_user = User.find_for_open_id(@user_data)
+        assert created_user.persisted?
+        assert created_user.registered?
+      end
+    end
+
+    def test_find_for_openid_with_manual_activation_when_user_not_exist
+      with_settings :openid => 1, :self_registration => 2 do
+        @user_data = OpenStruct.new
+        @user_data.uid = 'http://uid.example.net'
+        @user_data.info = {
+          :email => 'abc@abc.ru',
+          :nickname => 'unexistent',
+          :name => 'Ghost Man'
+        }
+        created_user = User.find_for_open_id(@user_data)
+        assert created_user.persisted?
+        assert_equal User::STATUS_REGISTERED, created_user.status
+      end
+    end
+
+    def test_find_for_openid_with_autoregistration_when_user_not_exist
+      with_settings :openid => 1, :self_registration => 3 do
+        @user_data = OpenStruct.new
+        @user_data.uid = 'http://uid.example.net'
+        @user_data.info = {
+          :email => 'abc@abc.ru',
+          :nickname => 'unexistent',
+          :name => 'Ghost Man'
+        }
+        created_user = User.find_for_open_id(@user_data)
+        assert created_user.persisted?
+        assert created_user.active?
+      end
+    end
+
+    def test_find_for_openid_when_validation_failure
+      [:email, :nickname, :name].each do |field|
+        with_settings :openid => 1, :self_registration => 3 do
+          @user_data = OpenStruct.new
+          @user_data.uid = 'http://uid.example.net'
+
+          # stubing validation failure by excepting required fields
+          @user_data.info = {
+            :email => 'abc@abc.ru',
+            :nickname => 'unexistent',
+            :name => 'Ghost Man'
+          }.except(field)
+
+          created_user = User.find_for_open_id(@user_data)
+          assert !created_user.persisted?
+          assert created_user.kind_of?(User)
+        end
+      end
+    end
   end
-
-  def test_setting_identity_url_without_trailing_slash
-    normalized_open_id_url = 'http://example.com/'
-    u = User.new( :identity_url => 'http://example.com' )
-    assert_equal normalized_open_id_url, u.identity_url
-  end
-
-  def test_setting_identity_url_without_protocol
-    normalized_open_id_url = 'http://example.com/'
-    u = User.new( :identity_url => 'example.com' )
-    assert_equal normalized_open_id_url, u.identity_url
-  end
-
-  def test_setting_blank_identity_url
-    u = User.new( :identity_url => 'example.com' )
-    u.identity_url = ''
-    assert u.identity_url.blank?
-  end
-
-  def test_setting_invalid_identity_url
-    u = User.new( :identity_url => 'this is not an openid url' )
-    assert u.identity_url.blank?
-  end
-
-  else
-    puts "Skipping openid tests."
-  end
-
 end

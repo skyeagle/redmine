@@ -226,7 +226,7 @@ th:
   field_login: ชื่อที่ใช้เข้าระบบ
   field_mail_notification: การแจ้งเตือนทางอีเมล์
   field_admin: ผู้บริหารจัดการ
-  field_last_login_on: เข้าระบบครั้งสุดท้าย
+  field_last_sign_in_at: เข้าระบบครั้งสุดท้าย
   field_language: ภาษา
   field_effective_date: วันที่
   field_password: รหัสผ่าน

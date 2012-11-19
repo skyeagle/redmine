@@ -222,7 +222,7 @@ it:
   field_login: Utente
   field_mail_notification: Notifiche via email
   field_admin: Amministratore
-  field_last_login_on: Ultima connessione
+  field_last_sign_in_at: Ultima connessione
   field_language: Lingua
   field_effective_date: Data
   field_password: Password

@@ -29,7 +29,7 @@ class UsersController < ApplicationController
 
   def index
     sort_init 'login', 'asc'
-    sort_update %w(login firstname lastname mail admin created_on last_login_on)
+    sort_update %w(login firstname lastname email admin created_on last_sign_in_at)
 
     case params[:format]
     when 'xml', 'json'
@@ -55,7 +55,7 @@ class UsersController < ApplicationController
         render :layout => !request.xhr?
       }
       format.api
-    end	
+    end
   end
 
   def show
@@ -80,7 +80,6 @@ class UsersController < ApplicationController
 
   def new
     @user = User.new(:language => Setting.default_language, :mail_notification => Setting.default_notification_option)
-    @auth_sources = AuthSource.all
   end
 
   def create
@@ -88,7 +87,8 @@ class UsersController < ApplicationController
     @user.safe_attributes = params[:user]
     @user.admin = params[:user][:admin] || false
     @user.login = params[:user][:login]
-    @user.password, @user.password_confirmation = params[:user][:password], params[:user][:password_confirmation] unless @user.auth_source_id
+    @user.activate
+    @user.skip_confirmation!
 
     if @user.save
       @user.pref.attributes = params[:pref]
@@ -109,10 +109,6 @@ class UsersController < ApplicationController
         format.api  { render :action => 'show', :status => :created, :location => user_url(@user) }
       end
     else
-      @auth_sources = AuthSource.all
-      # Clear password input
-      @user.password = @user.password_confirmation = nil
-
       respond_to do |format|
         format.html { render :action => 'new' }
         format.api  { render_validation_errors(@user) }
@@ -121,16 +117,12 @@ class UsersController < ApplicationController
   end
 
   def edit
-    @auth_sources = AuthSource.all
     @membership ||= Member.new
   end
 
   def update
     @user.admin = params[:user][:admin] if params[:user][:admin]
     @user.login = params[:user][:login] if params[:user][:login]
-    if params[:user][:password].present? && (@user.auth_source_id.nil? || params[:user][:auth_source_id].blank?)
-      @user.password, @user.password_confirmation = params[:user][:password], params[:user][:password_confirmation]
-    end
     @user.safe_attributes = params[:user]
     # Was the account actived ? (do it before User#save clears the change)
     was_activated = (@user.status_change == [User::STATUS_REGISTERED, User::STATUS_ACTIVE])
@@ -144,7 +136,7 @@ class UsersController < ApplicationController
 
       if was_activated
         Mailer.account_activated(@user).deliver
-      elsif @user.active? && params[:send_information] && !params[:user][:password].blank? && @user.auth_source_id.nil?
+      elsif @user.active? && params[:send_information] && !params[:user][:password].blank?
         Mailer.account_information(@user, params[:user][:password]).deliver
       end
 
@@ -156,10 +148,7 @@ class UsersController < ApplicationController
         format.api  { render_api_ok }
       end
     else
-      @auth_sources = AuthSource.all
       @membership ||= Member.new
-      # Clear password input
-      @user.password = @user.password_confirmation = nil
 
       respond_to do |format|
         format.html { render :action => :edit }

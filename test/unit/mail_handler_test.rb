@@ -209,7 +209,7 @@ class MailHandlerTest < ActiveSupport::TestCase
     assert issue.is_a?(Issue)
     assert !issue.new_record?
     issue.reload
-    assert issue.watched_by?(User.find_by_mail('dlopper@somenet.foo'))
+    assert issue.watched_by?(User.find_by_email('dlopper@somenet.foo'))
     assert_equal 1, issue.watcher_user_ids.size
   end
 
@@ -290,17 +290,23 @@ class MailHandlerTest < ActiveSupport::TestCase
               )
       assert issue.is_a?(Issue)
       assert issue.author.active?
-      assert_equal 'john.doe@somenet.foo', issue.author.mail
+      assert_equal 'john.doe@somenet.foo', issue.author.email
       assert_equal 'John', issue.author.firstname
       assert_equal 'Doe', issue.author.lastname
 
       # account information
       email = ActionMailer::Base.deliveries.first
       assert_not_nil email
-      assert email.subject.include?('account activation')
-      login = mail_body(email).match(/\* Login: (.*)$/)[1].strip
-      password = mail_body(email).match(/\* Password: (.*)$/)[1].strip
-      assert_equal issue.author, User.try_to_login(login, password)
+      assert email.subject.include?('Confirmation instructions')
+
+      assert_equal 1, email.to.size
+      login = email.to[0].match(/^#{Regexp.escape(issue.author.email)}$/)[0]
+      assert_equal issue.author.email, login
+
+      confirm_code = email.body.match(/#{Regexp.escape(issue.author.confirmation_token)}/m)[0]
+      assert_equal issue.author.confirmation_token, confirm_code
+
+      assert_equal issue.author, User.find_first_by_auth_conditions(:login => login)
     end
   end
 
@@ -326,7 +332,7 @@ class MailHandlerTest < ActiveSupport::TestCase
   end
 
   def test_add_issue_with_localized_attributes
-    User.find_by_mail('jsmith@somenet.foo').update_attribute 'language', 'fr'
+    User.find_by_email('jsmith@somenet.foo').update_attribute 'language', 'fr'
     issue = submit_email(
               'ticket_with_localized_attributes.eml',
               :allow_override => 'tracker,category,priority'
@@ -737,7 +743,7 @@ class MailHandlerTest < ActiveSupport::TestCase
       user = MailHandler.new_user_from_attributes(attrs.first, attrs.last)
 
       assert user.valid?, user.errors.full_messages.to_s
-      assert_equal attrs.first, user.mail
+      assert_equal attrs.first, user.email
       assert_equal expected[0], user.login
       assert_equal expected[1], user.firstname
       assert_equal expected[2], user.lastname
@@ -756,7 +762,7 @@ class MailHandlerTest < ActiveSupport::TestCase
     user = MailHandler.new_user_from_attributes('foo+bar@example.net')
     assert user.valid?
     assert user.login =~ /^user[a-f0-9]+$/
-    assert_equal 'foo+bar@example.net', user.mail
+    assert_equal 'foo+bar@example.net', user.email
   end
 
   def test_new_user_with_utf8_encoded_fullname_should_be_decoded
@@ -769,7 +775,7 @@ class MailHandlerTest < ActiveSupport::TestCase
     end
 
     user = User.first(:order => 'id DESC')
-    assert_equal "foo@example.org", user.mail
+    assert_equal "foo@example.org", user.email
     str1 = "\xc3\x84\xc3\xa4"
     str2 = "\xc3\x96\xc3\xb6"
     str1.force_encoding('UTF-8') if str1.respond_to?(:force_encoding)

@@ -24,7 +24,7 @@ class SearchControllerTest < ActionController::TestCase
            :repositories, :changesets
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_search_for_projects
@@ -88,14 +88,16 @@ class SearchControllerTest < ActionController::TestCase
 
   def test_search_issues_should_search_private_notes_with_permission_only
     Journal.create!(:journalized => Issue.find(2), :notes => 'Private notes with searchkeyword', :private_notes => true)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     Role.find(1).add_permission! :view_private_notes
+    User.current.reload
     get :index, :q => 'searchkeyword', :issues => 1
     assert_response :success
     assert_include Issue.find(2), assigns(:results)
 
     Role.find(1).remove_permission! :view_private_notes
+    User.current.reload
     get :index, :q => 'searchkeyword', :issues => 1
     assert_response :success
     assert_not_include Issue.find(2), assigns(:results)
@@ -109,7 +111,7 @@ class SearchControllerTest < ActionController::TestCase
   end
 
   def test_search_my_projects
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :index, :id => 1, :q => 'recipe subproject', :scope => 'my_projects', :all_words => ''
     assert_response :success
     assert_template 'index'

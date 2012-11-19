@@ -1,14 +1,22 @@
 module ObjectHelpers
-  def User.generate!(attributes={})
+  def User.generate!(attributes={}, &block)
+    user = User.generate(attributes, &block)
+    user.activate
+    user.skip_confirmation!
+    user.save!
+    user
+  end
+
+  def User.generate(attributes = {})
     @generated_user_login ||= 'user0'
     @generated_user_login.succ!
     user = User.new(attributes)
+    user.password = Devise.friendly_token[0,20]
     user.login = @generated_user_login if user.login.blank?
-    user.mail = "#{@generated_user_login}@example.com" if user.mail.blank?
+    user.email = "#{@generated_user_login}@example.com" if user.email.blank?
     user.firstname = "Bob" if user.firstname.blank?
     user.lastname = "Doe" if user.lastname.blank?
     yield user if block_given?
-    user.save!
     user
   end
 

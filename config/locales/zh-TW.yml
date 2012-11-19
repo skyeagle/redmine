@@ -345,7 +345,7 @@
   field_login: 帳戶名稱
   field_mail_notification: 電子郵件提醒選項
   field_admin: 管理者
-  field_last_login_on: 最近連線日期
+  field_last_sign_in_at: 最近連線日期
   field_language: 語系
   field_effective_date: 日期
   field_password: 目前密碼

@@ -21,7 +21,7 @@ class WelcomeControllerTest < ActionController::TestCase
   fixtures :projects, :news, :users, :members
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_index
@@ -65,7 +65,7 @@ class WelcomeControllerTest < ActionController::TestCase
     user = User.find(2)
     user.pref.warn_on_leaving_unsaved = '1'
     user.pref.save!
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     get :index
     assert_tag 'script',
@@ -77,7 +77,7 @@ class WelcomeControllerTest < ActionController::TestCase
     user = User.find(2)
     user.pref.warn_on_leaving_unsaved = '0'
     user.pref.save!
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     get :index
     assert_no_tag 'script',
@@ -91,7 +91,7 @@ class WelcomeControllerTest < ActionController::TestCase
 
   def test_project_jump_box_should_escape_names_once
     Project.find(1).update_attribute :name, 'Foo & Bar'
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     get :index
     assert_select "#header select" do

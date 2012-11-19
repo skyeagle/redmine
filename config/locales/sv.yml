@@ -303,7 +303,7 @@ sv:
   field_login: Användarnamn
   field_mail_notification: Mailnotifieringar
   field_admin: Administratör
-  field_last_login_on: Senaste inloggning
+  field_last_sign_in_at: Senaste inloggning
   field_language: Språk
   field_effective_date: Datum
   field_password: Lösenord

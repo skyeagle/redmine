@@ -239,7 +239,7 @@ pt:
   field_login: Nome de utilizador
   field_mail_notification: Notificações por e-mail
   field_admin: Administrador
-  field_last_login_on: Última visita
+  field_last_sign_in_at: Última visita
   field_language: Língua
   field_effective_date: Data
   field_password: Palavra-chave

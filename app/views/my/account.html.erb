@@ -1,5 +1,5 @@
 <div class="contextual">
-<%= link_to(l(:button_change_password), {:action => 'password'}, :class => 'icon icon-passwd') if @user.change_password_allowed? %>
+<%= link_to(l(:button_change_password_or_email), edit_user_registration_path, :class => 'icon icon-passwd') %>
 <%= call_hook(:view_my_account_contextual, :user => @user)%>
 </div>
 
@@ -15,7 +15,7 @@
   <legend><%=l(:label_information_plural)%></legend>
   <p><%= f.text_field :firstname, :required => true %></p>
   <p><%= f.text_field :lastname, :required => true %></p>
-  <p><%= f.text_field :mail, :required => true %></p>
+  <p><%= f.text_field :email, :disabled => true %></p>
   <p><%= f.select :language, lang_options_for_select %></p>
   <% if Setting.openid? %>
   <p><%= f.text_field :identity_url  %></p>

@@ -256,7 +256,7 @@ sr-YU:
   field_login: Korisničko ime
   field_mail_notification: Obaveštenja putem e-pošte
   field_admin: Administrator
-  field_last_login_on: Poslednje povezivanje
+  field_last_sign_in_at: Poslednje povezivanje
   field_language: Jezik
   field_effective_date: Datum
   field_password: Lozinka

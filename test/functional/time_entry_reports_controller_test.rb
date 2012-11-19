@@ -53,7 +53,7 @@ class TimeEntryReportsControllerTest < ActionController::TestCase
     r.permissions_will_change!
     r.save
     get :report
-    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Ftime_entries%2Freport'
+    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Ftime_entries%2Freport'
   end
 
   def test_report_all_projects_one_criteria
@@ -216,7 +216,7 @@ class TimeEntryReportsControllerTest < ActionController::TestCase
         :criteria => ["member"], :format => "csv"
     assert_response :success
     assert_equal 'text/csv; header=present', @response.content_type
-    lines = @response.body.chomp.split("\n")    
+    lines = @response.body.chomp.split("\n")
     # Headers
     s1 = "\xa6\xa8\xad\xfb,2011-11-11,\xc1`\xadp"
     s2 = "\xc1`\xadp"
@@ -267,7 +267,7 @@ class TimeEntryReportsControllerTest < ActionController::TestCase
         :criteria => ["member"], :format => "csv"
     assert_response :success
     assert_equal 'text/csv; header=present', @response.content_type
-    lines = @response.body.chomp.split("\n")    
+    lines = @response.body.chomp.split("\n")
     # Headers
     s1 = "\xa6\xa8\xad\xfb,2011-11-11,\xc1`\xadp"
     if s1.respond_to?(:force_encoding)
@@ -308,7 +308,7 @@ class TimeEntryReportsControllerTest < ActionController::TestCase
           :criteria => ["member"], :format => "csv"
       assert_response :success
       assert_equal 'text/csv; header=present', @response.content_type
-      lines = @response.body.chomp.split("\n")    
+      lines = @response.body.chomp.split("\n")
       # Headers
       s1 = "Membre;2011-11-11;Total"
       s2 = "Total"

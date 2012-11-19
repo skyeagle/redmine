@@ -255,7 +255,7 @@ fa:
   field_login: ورود
   field_mail_notification: آگاه سازی‌های ایمیلی
   field_admin: سرپرست
-  field_last_login_on: آخرین ورود
+  field_last_sign_in_at: آخرین ورود
   field_language: زبان
   field_effective_date: تاریخ
   field_password: گذرواژه

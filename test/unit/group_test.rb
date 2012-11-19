@@ -32,7 +32,9 @@ class GroupTest < ActiveSupport::TestCase
 
   def test_create
     g = Group.new(:name => 'New group')
+    assert_equal 1, g.status
     assert g.save
+    assert_equal 1, g.status
     g.reload
     assert_equal 'New group', g.name
   end

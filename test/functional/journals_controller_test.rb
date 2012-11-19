@@ -22,7 +22,7 @@ class JournalsControllerTest < ActionController::TestCase
     :trackers, :issue_statuses, :enumerations, :custom_fields, :custom_values, :custom_fields_projects
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_index
@@ -34,13 +34,14 @@ class JournalsControllerTest < ActionController::TestCase
 
   def test_index_should_return_privates_notes_with_permission_only
     journal = Journal.create!(:journalized => Issue.find(2), :notes => 'Privates notes', :private_notes => true, :user_id => 1)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     get :index, :project_id => 1
     assert_response :success
     assert_include journal, assigns(:journals)
 
     Role.find(1).remove_permission! :view_private_notes
+    User.current.reload
     get :index, :project_id => 1
     assert_response :success
     assert_not_include journal, assigns(:journals)
@@ -60,7 +61,7 @@ class JournalsControllerTest < ActionController::TestCase
   end
 
   def test_reply_to_issue
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :new, :id => 6
     assert_response :success
     assert_template 'new'
@@ -69,13 +70,13 @@ class JournalsControllerTest < ActionController::TestCase
   end
 
   def test_reply_to_issue_without_permission
-    @request.session[:user_id] = 7
+    sign_in users(:users_007)
     xhr :get, :new, :id => 6
-    assert_response 403
+    assert_response 401
   end
 
   def test_reply_to_note
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :new, :id => 6, :journal_id => 4
     assert_response :success
     assert_template 'new'
@@ -85,7 +86,7 @@ class JournalsControllerTest < ActionController::TestCase
 
   def test_reply_to_private_note_should_fail_without_permission
     journal = Journal.create!(:journalized => Issue.find(2), :notes => 'Privates notes', :private_notes => true)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     xhr :get, :new, :id => 2, :journal_id => journal.id
     assert_response :success
@@ -94,12 +95,13 @@ class JournalsControllerTest < ActionController::TestCase
     assert_include '> Privates notes', response.body
 
     Role.find(1).remove_permission! :view_private_notes
+    User.current.reload
     xhr :get, :new, :id => 2, :journal_id => journal.id
     assert_response 404
   end
 
   def test_edit_xhr
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     xhr :get, :edit, :id => 2
     assert_response :success
     assert_template 'edit'
@@ -109,7 +111,7 @@ class JournalsControllerTest < ActionController::TestCase
 
   def test_edit_private_note_should_fail_without_permission
     journal = Journal.create!(:journalized => Issue.find(2), :notes => 'Privates notes', :private_notes => true)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Role.find(1).add_permission! :edit_issue_notes
 
     xhr :get, :edit, :id => journal.id
@@ -119,12 +121,13 @@ class JournalsControllerTest < ActionController::TestCase
     assert_include 'textarea', response.body
 
     Role.find(1).remove_permission! :view_private_notes
+    User.current.reload
     xhr :get, :edit, :id => journal.id
     assert_response 404
   end
 
   def test_update_xhr
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     xhr :post, :edit, :id => 2, :notes => 'Updated notes'
     assert_response :success
     assert_template 'update'
@@ -134,7 +137,7 @@ class JournalsControllerTest < ActionController::TestCase
   end
 
   def test_update_xhr_with_empty_notes_should_delete_the_journal
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     assert_difference 'Journal.count', -1 do
       xhr :post, :edit, :id => 2, :notes => ''
       assert_response :success

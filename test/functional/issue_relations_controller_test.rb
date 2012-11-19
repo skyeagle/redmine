@@ -31,8 +31,8 @@ class IssueRelationsControllerTest < ActionController::TestCase
            :trackers
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 3
+    sign_out(:user)
+    sign_in users(:users_003)
   end
 
   def test_create

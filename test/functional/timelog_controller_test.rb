@@ -27,7 +27,7 @@ class TimelogControllerTest < ActionController::TestCase
   include Redmine::I18n
 
   def test_new_with_project_id
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :new, :project_id => 1
     assert_response :success
     assert_template 'new'
@@ -36,7 +36,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_new_with_issue_id
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :new, :issue_id => 2
     assert_response :success
     assert_template 'new'
@@ -45,7 +45,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_new_without_project
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :new
     assert_response :success
     assert_template 'new'
@@ -54,7 +54,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_new_without_project_should_prefill_the_form
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :new, :time_entry => {:project_id => '1'}
     assert_response :success
     assert_template 'new'
@@ -66,14 +66,14 @@ class TimelogControllerTest < ActionController::TestCase
 
   def test_new_without_project_should_deny_without_permission
     Role.all.each {|role| role.remove_permission! :log_time}
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
 
     get :new
     assert_response 403
   end
 
   def test_new_should_select_default_activity
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :new, :project_id => 1
     assert_response :success
     assert_select 'select[name=?]', 'time_entry[activity_id]' do
@@ -82,14 +82,14 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_new_should_only_show_active_time_entry_activities
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     get :new, :project_id => 1
     assert_response :success
     assert_no_tag 'option', :content => 'Inactive Activity'
   end
 
   def test_get_edit_existing_time
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 2, :project_id => nil
     assert_response :success
     assert_template 'edit'
@@ -102,7 +102,7 @@ class TimelogControllerTest < ActionController::TestCase
     te.activity = TimeEntryActivity.find_by_name("Inactive Activity")
     te.save!
 
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :edit, :project_id => 1, :id => 1
     assert_response :success
     assert_template 'edit'
@@ -113,7 +113,7 @@ class TimelogControllerTest < ActionController::TestCase
   def test_post_create
     # TODO: should POST to issues’ time log instead of project. change form
     # and routing
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create, :project_id => 1,
                 :time_entry => {:comments => 'Some work on TimelogControllerTest',
                                 # Not the default activity
@@ -136,7 +136,7 @@ class TimelogControllerTest < ActionController::TestCase
   def test_post_create_with_blank_issue
     # TODO: should POST to issues’ time log instead of project. change form
     # and routing
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create, :project_id => 1,
                 :time_entry => {:comments => 'Some work on TimelogControllerTest',
                                 # Not the default activity
@@ -154,7 +154,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_and_continue
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :project_id => 1,
                 :time_entry => {:activity_id => '11',
                                 :issue_id => '',
@@ -165,7 +165,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_and_continue_with_issue_id
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :project_id => 1,
                 :time_entry => {:activity_id => '11',
                                 :issue_id => '1',
@@ -176,7 +176,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_and_continue_without_project
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :time_entry => {:project_id => '1',
                                 :activity_id => '11',
                                 :issue_id => '',
@@ -188,7 +188,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_without_log_time_permission_should_be_denied
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Role.find_by_name('Manager').remove_permission! :log_time
     post :create, :project_id => 1,
                 :time_entry => {:activity_id => '11',
@@ -200,7 +200,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :project_id => 1,
                 :time_entry => {:activity_id => '',
                                 :issue_id => '',
@@ -212,7 +212,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_without_project
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'TimeEntry.count' do
       post :create, :time_entry => {:project_id => '1',
                                   :activity_id => '11',
@@ -227,7 +227,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_without_project_should_fail_with_issue_not_inside_project
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'TimeEntry.count' do
       post :create, :time_entry => {:project_id => '1',
                                   :activity_id => '11',
@@ -241,7 +241,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_without_project_should_deny_without_permission
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Project.find(3).disable_module!(:time_tracking)
 
     assert_no_difference 'TimeEntry.count' do
@@ -256,7 +256,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_create_without_project_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'TimeEntry.count' do
       post :create, :time_entry => {:project_id => '1',
                                   :activity_id => '11',
@@ -275,7 +275,7 @@ class TimelogControllerTest < ActionController::TestCase
     assert_equal 1, entry.issue_id
     assert_equal 2, entry.user_id
 
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     put :update, :id => 1,
                 :time_entry => {:issue_id => '2',
                                 :hours => '8'}
@@ -288,7 +288,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_get_bulk_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :bulk_edit, :ids => [1, 2]
     assert_response :success
     assert_template 'bulk_edit'
@@ -304,14 +304,14 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_get_bulk_edit_on_different_projects
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :bulk_edit, :ids => [1, 2, 6]
     assert_response :success
     assert_template 'bulk_edit'
   end
 
   def test_bulk_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     # update time entry activity
     post :bulk_update, :ids => [1, 2], :time_entry => { :activity_id => 9}
 
@@ -321,7 +321,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_bulk_update_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :bulk_update, :ids => [1, 2], :time_entry => { :hours => 'A'}
 
     assert_response 302
@@ -329,10 +329,10 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_bulk_update_on_different_projects
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     # makes user a manager on the other project
     Member.create!(:user_id => 2, :project_id => 3, :role_ids => [1])
-    
+
     # update time entry activity
     post :bulk_update, :ids => [1, 2, 4], :time_entry => { :activity_id => 9 }
 
@@ -342,7 +342,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_bulk_update_on_different_projects_without_rights
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     user = User.find(3)
     action = { :controller => "timelog", :action => "bulk_update" }
     assert user.allowed_to?(action, TimeEntry.find(1).project)
@@ -352,7 +352,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_bulk_update_custom_field
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :bulk_update, :ids => [1, 2], :time_entry => { :custom_field_values => {'10' => '0'} }
 
     assert_response 302
@@ -360,7 +360,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_post_bulk_update_should_redirect_back_using_the_back_url_parameter
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :bulk_update, :ids => [1,2], :back_url => '/time_entries'
 
     assert_response :redirect
@@ -368,7 +368,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_post_bulk_update_should_not_redirect_back_using_the_back_url_parameter_off_the_host
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :bulk_update, :ids => [1,2], :back_url => 'http://google.com'
 
     assert_response :redirect
@@ -376,7 +376,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_post_bulk_update_without_edit_permission_should_be_denied
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Role.find_by_name('Manager').remove_permission! :edit_time_entries
     post :bulk_update, :ids => [1,2]
 
@@ -384,7 +384,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     delete :destroy, :id => 1
     assert_redirected_to :action => 'index', :project_id => 'ecookbook'
     assert_equal I18n.t(:notice_successful_delete), flash[:notice]
@@ -395,7 +395,7 @@ class TimelogControllerTest < ActionController::TestCase
     # simulate that this fails (e.g. due to a plugin), see #5700
     TimeEntry.any_instance.expects(:destroy).returns(false)
 
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     delete :destroy, :id => 1
     assert_redirected_to :action => 'index', :project_id => 'ecookbook'
     assert_equal I18n.t(:notice_unable_delete_time_entry), flash[:error]
@@ -413,7 +413,7 @@ class TimelogControllerTest < ActionController::TestCase
   end
 
   def test_index_all_projects_should_show_log_time_link
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :index
     assert_response :success
     assert_template 'index'
@@ -634,7 +634,7 @@ class TimelogControllerTest < ActionController::TestCase
       str_utf8.force_encoding('UTF-8')
       str_big5.force_encoding('Big5')
     end
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create, :project_id => 1,
                 :time_entry => {:comments => str_utf8,
                                 # Not the default activity
@@ -671,7 +671,7 @@ class TimelogControllerTest < ActionController::TestCase
     if str_utf8.respond_to?(:force_encoding)
       str_utf8.force_encoding('UTF-8')
     end
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
     post :create, :project_id => 1,
                 :time_entry => {:comments => str_utf8,
                                 # Not the default activity

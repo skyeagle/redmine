@@ -26,11 +26,11 @@ class PatchesTest < ActiveSupport::TestCase
     end
 
     should "transform name to field_name" do
-      assert_equal l('field_last_login_on'), ActiveRecord::Base.human_attribute_name('last_login_on')
+      assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at')
     end
 
     should "cut extra _id suffix for better validation" do
-      assert_equal l('field_last_login_on'), ActiveRecord::Base.human_attribute_name('last_login_on_id')
+      assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at_id')
     end
 
     should "default to humanized value if no translation has been found (useful for custom fields)" do

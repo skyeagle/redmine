@@ -60,8 +60,8 @@ class PrincipalTest < ActiveSupport::TestCase
       Principal.create!(:lastname => 'lastname')
       Principal.create!(:lastname => 'lastname2')
 
-      Principal.create!(:mail => 'mail@example.com')
-      Principal.create!(:mail => 'mail2@example.com')
+      Principal.create!(:email => 'mail@example.com')
+      Principal.create!(:email => 'mail2@example.com')
 
       @palmer = Principal.create!(:firstname => 'David', :lastname => 'Palmer')
     end
@@ -91,7 +91,7 @@ class PrincipalTest < ActiveSupport::TestCase
       results = Principal.like('mail')
 
       assert_equal 2, results.count
-      assert results.all? {|u| u.mail.match(/mail/) }
+      assert results.all? {|u| u.email.match(/mail/) }
     end
 
     should "search firstname and lastname" do

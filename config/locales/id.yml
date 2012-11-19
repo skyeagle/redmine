@@ -241,7 +241,7 @@ id:
   field_login: Login
   field_mail_notification: Notifikasi email
   field_admin: Administrator
-  field_last_login_on: Terakhir login
+  field_last_sign_in_at: Terakhir login
   field_language: Bahasa
   field_effective_date: Tanggal
   field_password: Kata sandi

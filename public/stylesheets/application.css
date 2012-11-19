@@ -90,13 +90,13 @@ html>body #content { min-height: 600px; }
 #login-form table {margin-top:5em; padding:1em; margin-left: auto; margin-right: auto; border: 2px solid #FDBF3B; background-color:#FFEBC1; }
 #login-form table td {padding: 6px;}
 #login-form label {font-weight: bold;}
-#login-form input#username, #login-form input#password { width: 300px; }
+#user_login, #user_password { width: 300px; }
 
 div.modal { border-radius:5px; background:#fff; z-index:50; padding:4px;}
 div.modal h3.title {display:none;}
 div.modal p.buttons {text-align:right; margin-bottom:0;}
 
-input#openid_url { background: url(../images/openid-bg.gif) no-repeat; background-color: #fff; background-position: 0 50%; padding-left: 18px; }
+input#user_identity_url { background: url(../images/openid-bg.gif) no-repeat; background-color: #fff; background-position: 0 50%; padding-left: 18px; width: 282px; }
 
 .clear:after{ content: "."; display: block; height: 0; clear: both; visibility: hidden; }
 
@@ -441,7 +441,7 @@ ul.properties li span {font-style:italic;}
 .total-hours span.hours-int { font-size: 120%; }
 
 .autoscroll {overflow-x: auto; padding:1px; margin-bottom: 1.2em;}
-#user_login, #user_firstname, #user_lastname, #user_mail, #my_account_form select, #user_form select, #user_identity_url { width: 90%; }
+/*#user_login, #user_firstname, #user_lastname, #user_mail, #my_account_form select, #user_form select, #user_identity_url { width: 90%; }*/
 
 #workflow_copy_form select { width: 200px; }
 table.transitions td.enabled {background: #bfb;}
@@ -580,7 +580,7 @@ input#principal_search.ajax-loading, input#user_search.ajax-loading {
 
 div.flash {margin-top: 8px;}
 
-div.flash.error, #errorExplanation {
+div.flash.error, div.flash.alert, #errorExplanation {
   background: url(../images/exclamation.png) 8px 50% no-repeat;
   background-color: #ffe3e3;
   border-color: #dd0000;

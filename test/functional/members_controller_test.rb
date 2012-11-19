@@ -21,8 +21,8 @@ class MembersControllerTest < ActionController::TestCase
   fixtures :projects, :members, :member_roles, :roles, :users
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 2
+    sign_out(:user)
+    sign_in users(:users_002)
   end
 
   def test_create

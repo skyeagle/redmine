@@ -42,7 +42,7 @@ class WikiContent < ActiveRecord::Base
   def recipients
     notified = project.notified_users
     notified.reject! {|user| !visible?(user)}
-    notified.collect(&:mail)
+    notified.collect(&:email)
   end
 
   # Return true if the content is the current page content

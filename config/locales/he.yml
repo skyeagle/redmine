@@ -259,7 +259,7 @@ he:
   field_login: שם משתמש
   field_mail_notification: הודעות דוא"ל
   field_admin: ניהול
-  field_last_login_on: התחברות אחרונה
+  field_last_sign_in_at: התחברות אחרונה
   field_language: שפה
   field_effective_date: תאריך
   field_password: סיסמה

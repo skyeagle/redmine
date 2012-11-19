@@ -21,8 +21,8 @@ class SettingsControllerTest < ActionController::TestCase
   fixtures :users
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 1 # admin
+    sign_out(:user)
+    sign_in users(:users_001) # admin
   end
 
   def test_index

@@ -27,4 +27,6 @@ RedmineApp::Application.configure do
   config.active_support.deprecation = :log
 
   config.secret_token = 'a secret token for running the tests'
+
+  config.action_mailer.default_url_options = { :host => 'example.com' }
 end

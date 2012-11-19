@@ -23,13 +23,6 @@ namespace :redmine do
     end
   end
 
-  namespace :tokens do
-    desc 'Removes expired tokens.'
-    task :prune => :environment do
-      Token.destroy_expired
-    end
-  end
-
   namespace :watchers do
     desc 'Removes watchers from what they can no longer view.'
     task :prune => :environment do

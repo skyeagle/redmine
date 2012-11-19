@@ -80,7 +80,7 @@ module Redmine
         def recipients
           notified = project.notified_users
           notified.reject! {|user| !visible?(user)}
-          notified.collect(&:mail)
+          notified.collect(&:email)
         end
 
         module ClassMethods

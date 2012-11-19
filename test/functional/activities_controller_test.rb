@@ -169,13 +169,15 @@ class ActivitiesControllerTest < ActionController::TestCase
 
   def test_index_should_show_private_notes_with_permission_only
     journal = Journal.create!(:journalized => Issue.find(2), :notes => 'Private notes with searchkeyword', :private_notes => true)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     get :index
     assert_response :success
     assert_include journal, assigns(:events_by_day).values.flatten
 
     Role.find(1).remove_permission! :view_private_notes
+    User.current.reload
+
     get :index
     assert_response :success
     assert_not_include journal, assigns(:events_by_day).values.flatten

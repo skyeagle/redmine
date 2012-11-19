@@ -249,7 +249,7 @@ namespace :redmine do
           fn = $1.strip
           ln = ($2 || '-').strip
 
-          u = User.new :mail => mail.gsub(/[^-@a-z0-9\.]/i, '-'),
+          u = User.new :email => mail.gsub(/[^-@a-z0-9\.]/i, '-'),
                        :firstname => fn[0, limit_for(User, 'firstname')],
                        :lastname => ln[0, limit_for(User, 'lastname')]
 

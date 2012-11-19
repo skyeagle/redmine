@@ -34,6 +34,7 @@ class Redmine::WikiFormatting::MacrosTest < ActionView::TestCase
 
   def setup
     super
+    I18n.locale = :en
     @project = nil
   end
 
@@ -80,7 +81,7 @@ class Redmine::WikiFormatting::MacrosTest < ActionView::TestCase
 
   def test_multiple_macros_on_the_same_line
     Redmine::WikiFormatting::Macros.macro :foo do |obj, args|
-      args.any? ? "args: #{args.join(',')}" : "no args" 
+      args.any? ? "args: #{args.join(',')}" : "no args"
     end
 
     assert_equal '<p>no args no args</p>', textilizable("{{foo}} {{foo}}")

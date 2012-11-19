@@ -240,7 +240,7 @@ el:
   field_login: Όνομα χρήστη
   field_mail_notification: Ειδοποιήσεις email
   field_admin: Διαχειριστής
-  field_last_login_on: Τελευταία σύνδεση
+  field_last_sign_in_at: Τελευταία σύνδεση
   field_language: Γλώσσα
   field_effective_date: Ημερομηνία
   field_password: Κωδικός πρόσβασης

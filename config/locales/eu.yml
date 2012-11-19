@@ -248,7 +248,7 @@ eu:
   field_login: Erabiltzaile izena
   field_mail_notification: Eposta jakinarazpenak
   field_admin: Kudeatzailea
-  field_last_login_on: Azken konexioa
+  field_last_sign_in_at: Azken konexioa
   field_language: Hizkuntza
   field_effective_date: Data
   field_password: Pasahitza

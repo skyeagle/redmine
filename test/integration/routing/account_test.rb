@@ -19,31 +19,57 @@ require File.expand_path('../../../test_helper', __FILE__)
 
 class RoutingAccountTest < ActionController::IntegrationTest
   def test_account
-    ["get", "post"].each do |method|
-      assert_routing(
-          { :method => method, :path => "/login" },
-          { :controller => 'account', :action => 'login' }
-        )
-    end
     assert_routing(
-        { :method => 'get', :path => "/logout" },
-        { :controller => 'account', :action => 'logout' }
-      )
-    ["get", "post"].each do |method|
-      assert_routing(
-          { :method => method, :path => "/account/register" },
-          { :controller => 'account', :action => 'register' }
-        )
-    end
-    ["get", "post"].each do |method|
-      assert_routing(
-          { :method => method, :path => "/account/lost_password" },
-          { :controller => 'account', :action => 'lost_password' }
-        )
-    end
+      { :method => 'get', :path => "/users/sign_in" },
+      { :controller => 'users/sessions', :action => 'new' }
+    )
     assert_routing(
-        { :method => 'get', :path => "/account/activate" },
-        { :controller => 'account', :action => 'activate' }
-      )
+      { :method => 'post', :path => "/users/sign_in" },
+      { :controller => 'users/sessions', :action => 'create' }
+    )
+    assert_routing(
+        { :method => 'get', :path => "/users/sign_out" },
+        { :controller => 'users/sessions', :action => 'destroy' }
+    )
+    assert_routing(
+      { :method => 'get', :path => "/users/register/sign_up" },
+      { :controller => 'users/registrations', :action => 'new' }
+    )
+    assert_routing(
+      { :method => 'post', :path => "/users/register" },
+      { :controller => 'users/registrations', :action => 'create' }
+    )
+    assert_routing(
+      { :method => 'put', :path => "/users/register" },
+      { :controller => 'users/registrations', :action => 'update' }
+    )
+    assert_routing(
+      { :method => 'get', :path => "/users/password/new" },
+      { :controller => 'users/passwords', :action => 'new' }
+    )
+    assert_routing(
+      { :method => 'get', :path => "/users/password/edit" },
+      { :controller => 'users/passwords', :action => 'edit' }
+    )
+    assert_routing(
+      { :method => 'put', :path => "/users/password" },
+      { :controller => 'users/passwords', :action => 'update' }
+    )
+    assert_routing(
+      { :method => 'post', :path => "/users/password" },
+      { :controller => 'users/passwords', :action => 'create' }
+    )
+    assert_routing(
+      { :method => 'get', :path => "/users/confirmation/new" },
+      { :controller => 'users/confirmations', :action => 'new' }
+    )
+    assert_routing(
+      { :method => 'post', :path => "/users/confirmation" },
+      { :controller => 'users/confirmations', :action => 'create' }
+    )
+    assert_routing(
+      { :method => 'get', :path => "/users/confirmation" },
+      { :controller => 'users/confirmations', :action => 'show' }
+    )
   end
 end

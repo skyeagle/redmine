@@ -22,12 +22,12 @@ class IssueCategoriesControllerTest < ActionController::TestCase
            :issues
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 2
+    sign_out(:user)
+    sign_in users(:users_002)
   end
 
   def test_new
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     get :new, :project_id => '1'
     assert_response :success
     assert_template 'new'
@@ -35,7 +35,7 @@ class IssueCategoriesControllerTest < ActionController::TestCase
   end
 
   def test_new_from_issue_form
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     xhr :get, :new, :project_id => '1'
 
     assert_response :success
@@ -44,7 +44,7 @@ class IssueCategoriesControllerTest < ActionController::TestCase
   end
 
   def test_create
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     assert_difference 'IssueCategory.count' do
       post :create, :project_id => '1', :issue_category => {:name => 'New category'}
     end
@@ -55,14 +55,14 @@ class IssueCategoriesControllerTest < ActionController::TestCase
   end
 
   def test_create_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :project_id => '1', :issue_category => {:name => ''}
     assert_response :success
     assert_template 'new'
   end
 
   def test_create_from_issue_form
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     assert_difference 'IssueCategory.count' do
       xhr :post, :create, :project_id => '1', :issue_category => {:name => 'New category'}
     end
@@ -75,7 +75,7 @@ class IssueCategoriesControllerTest < ActionController::TestCase
   end
 
   def test_create_from_issue_form_with_failure
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     assert_no_difference 'IssueCategory.count' do
       xhr :post, :create, :project_id => '1', :issue_category => {:name => ''}
     end
@@ -86,7 +86,7 @@ class IssueCategoriesControllerTest < ActionController::TestCase
   end
 
   def test_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 2
     assert_response :success
     assert_template 'edit'

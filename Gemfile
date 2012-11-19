@@ -1,6 +1,8 @@
 source 'http://rubygems.org'
 
 gem 'rails', '3.2.9'
+gem 'devise', '~> 2.1.2', :github => 'plataformatec/devise'
+gem 'devise-encryptable'
 gem "jquery-rails", "~> 2.0.2"
 gem "i18n", "~> 0.6.0"
 gem "coderay", "~> 1.0.6"
@@ -14,8 +16,8 @@ end
 
 # Optional gem for OpenID authentication
 group :openid do
-  gem "ruby-openid", "~> 2.1.4", :require => "openid"
-  gem "rack-openid"
+  gem 'omniauth-openid'
+  gem 'openid_active_record_store', :github => 'skyeagle/openid_active_record_store'
 end
 
 # Optional gem for exporting the gantt to a PNG file, not supported with jruby

@@ -17,7 +17,17 @@
 
 require "digest/sha1"
 
+require "devise/encryptors/redmine_sha1"
+require "devise/strategies/api_key_authenticatable"
+require "devise/strategies/rss_key_authenticatable"
+
 class User < Principal
+
+  devise :database_authenticatable, :registerable, :confirmable,
+    :recoverable, :rememberable, :trackable, :validatable, :encryptable,
+    :api_key_authenticatable, :rss_key_authenticatable, :omniauthable
+
+  # Setup accessible (or protected) attributes for your model
   include Redmine::SafeAttributes
 
   # Account statuses
@@ -80,36 +90,26 @@ class User < Principal
   has_one :preference, :dependent => :destroy, :class_name => 'UserPreference'
   has_one :rss_token, :class_name => 'Token', :conditions => "action='feeds'"
   has_one :api_token, :class_name => 'Token', :conditions => "action='api'"
-  belongs_to :auth_source
 
   scope :logged, :conditions => "#{User.table_name}.status <> #{STATUS_ANONYMOUS}"
   scope :status, lambda {|arg| arg.blank? ? {} : {:conditions => {:status => arg.to_i}} }
 
   acts_as_customizable
 
-  attr_accessor :password, :password_confirmation
-  attr_accessor :last_before_login_on
   # Prevents unauthorized assignments
-  attr_protected :login, :admin, :password, :password_confirmation, :hashed_password
+  attr_protected :login, :admin, :encrypted_password, :password_salt
 
   LOGIN_LENGTH_LIMIT = 60
-  MAIL_LENGTH_LIMIT = 60
 
-  validates_presence_of :login, :firstname, :lastname, :mail, :if => Proc.new { |user| !user.is_a?(AnonymousUser) }
+  validates_presence_of :login, :firstname, :lastname, :if => Proc.new { |user| !user.is_a?(AnonymousUser) }
   validates_uniqueness_of :login, :if => Proc.new { |user| user.login_changed? && user.login.present? }, :case_sensitive => false
-  validates_uniqueness_of :mail, :if => Proc.new { |user| user.mail_changed? && user.mail.present? }, :case_sensitive => false
   # Login must contain lettres, numbers, underscores only
   validates_format_of :login, :with => /^[a-z0-9_\-@\.]*$/i
   validates_length_of :login, :maximum => LOGIN_LENGTH_LIMIT
   validates_length_of :firstname, :lastname, :maximum => 30
-  validates_format_of :mail, :with => /^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i, :allow_blank => true
-  validates_length_of :mail, :maximum => MAIL_LENGTH_LIMIT, :allow_nil => true
-  validates_confirmation_of :password, :allow_nil => true
   validates_inclusion_of :mail_notification, :in => MAIL_NOTIFICATION_OPTIONS.collect(&:first), :allow_blank => true
-  validate :validate_password_length
 
   before_create :set_mail_notification
-  before_save   :update_hashed_password
   before_destroy :remove_references_before_destroy
 
   scope :in_group, lambda {|group|
@@ -126,83 +126,69 @@ class User < Principal
     true
   end
 
-  def update_hashed_password
-    # update hashed_password if password was set
-    if self.password && self.auth_source_id.blank?
-      salt_password(password)
-    end
-  end
-
   def reload(*args)
     @name = nil
     @projects_by_role = nil
     super
   end
 
-  def mail=(arg)
-    write_attribute(:mail, arg.to_s.strip)
-  end
-
-  def identity_url=(url)
-    if url.blank?
-      write_attribute(:identity_url, '')
-    else
-      begin
-        write_attribute(:identity_url, OpenIdAuthentication.normalize_identifier(url))
-      rescue OpenIdAuthentication::InvalidOpenId
-        # Invlaid url, don't save
-      end
-    end
-    self.read_attribute(:identity_url)
-  end
-
-  # Returns the user that matches provided login and password, or nil
-  def self.try_to_login(login, password)
-    login = login.to_s
-    password = password.to_s
-
-    # Make sure no one can sign in with an empty password
-    return nil if password.empty?
-    user = find_by_login(login)
-    if user
-      # user is already in local database
-      return nil if !user.active?
-      if user.auth_source
-        # user has an external authentication method
-        return nil unless user.auth_source.authenticate(login, password)
-      else
-        # authentication with local password
-        return nil unless user.check_password?(password)
-      end
-    else
-      # user is not yet registered, try to authenticate with available sources
-      attrs = AuthSource.authenticate(login, password)
-      if attrs
-        user = new(attrs)
-        user.login = login
-        user.language = Setting.default_language
-        if user.save
-          user.reload
-          logger.info("User '#{user.login}' created from external auth source: #{user.auth_source.type} - #{user.auth_source.name}") if logger && user.auth_source
+  def self.new_with_session(params, session)
+    super.tap do |user|
+      if data = session['devise.open_id_data']
+        data.delete_if{|k, v| v.blank? }
+        data.each do |k, v|
+          user.send :"#{k}=", v
         end
       end
     end
-    user.update_attribute(:last_login_on, Time.now) if user && !user.new_record?
-    user
-  rescue => text
-    raise text
   end
 
-  # Returns the user who matches the given autologin +key+ or nil
-  def self.try_to_autologin(key)
-    tokens = Token.find_all_by_action_and_value('autologin', key.to_s)
-    # Make sure there's only 1 token that matches the key
-    if tokens.size == 1
-      token = tokens.first
-      if (token.created_on > Setting.autologin.to_i.day.ago) && token.user && token.user.active?
-        token.user.update_attribute(:last_login_on, Time.now)
-        token.user
+  def self.find_for_open_id(access_token, signed_in_resource=nil)
+    return if !access_token || Setting.openid != '1' || access_token.uid.blank?
+    if user = User.where(:identity_url => access_token.uid).first
+      user
+    else
+      return if Setting.self_registration == '0'
+      data = access_token.info.with_indifferent_access
+      user = User.create(:language => Setting.default_language) do |u|
+        u.identity_url = access_token.uid if access_token.respond_to?(:uid)
+        u.email = data['email'] if data['email'].present?
+        u.password = u.password_confirmation = Devise.friendly_token[0,20]
+        u.login = data['nickname'] if data['nickname'].present?
+        if data['fullname'].present?
+          u.firstname, u.lastname = data['fullname'].split(' ')
+        elsif data['name'].present?
+          u.firstname, u.lastname = data['name'].split(' ')
+        end
+
+        u.activate if Setting.self_registration == '3'
+
+        # Skip confirmation by email when it should be manual by admin or automatic
+        u.skip_confirmation! if [2,3].include?(Setting.self_registration.to_i)
       end
+
+      if user && user.persisted?
+        # Notify admin if manually activate by administrator
+        Mailer.account_activation_request(user).deliver if Setting.self_registration == '2'
+      end
+
+      user
+    end
+  end
+
+  def self.find_first_by_auth_conditions(params_conditions)
+    conditions = params_conditions.dup
+    if login = conditions.delete(:login)
+      users = active.where(["login = :value", { :value => login }])
+      if users.present? && user = users.detect {|u| u.login == login}
+        user
+      elsif user = active.where(["lower(login) = :value OR lower(email) = :value", { :value => login.downcase }]).first
+        user
+      end
+    elsif conditions[:confirmation_token]
+      where(conditions).first
+    else
+      active.where(conditions).first
     end
   end
 
@@ -256,6 +242,7 @@ class User < Principal
   end
 
   def activate!
+    confirm! unless confirmed?
     update_attribute(:status, STATUS_ACTIVE)
   end
 
@@ -267,38 +254,8 @@ class User < Principal
     update_attribute(:status, STATUS_LOCKED)
   end
 
-  # Returns true if +clear_password+ is the correct user's password, otherwise false
-  def check_password?(clear_password)
-    if auth_source_id.present?
-      auth_source.authenticate(self.login, clear_password)
-    else
-      User.hash_password("#{salt}#{User.hash_password clear_password}") == hashed_password
-    end
-  end
-
-  # Generates a random salt and computes hashed_password for +clear_password+
-  # The hashed password is stored in the following form: SHA1(salt + SHA1(password))
-  def salt_password(clear_password)
-    self.salt = User.generate_salt
-    self.hashed_password = User.hash_password("#{salt}#{User.hash_password clear_password}")
-  end
-
-  # Does the backend storage allow this user to change their password?
-  def change_password_allowed?
-    return true if auth_source.nil?
-    return auth_source.allow_password_changes?
-  end
-
-  # Generate and set a random password.  Useful for automated user creation
-  # Based on Token#generate_token_value
-  #
-  def random_password
-    chars = ("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a
-    password = ''
-    40.times { |i| password << chars[rand(chars.size-1)] }
-    self.password = password
-    self.password_confirmation = password
-    self
+  def active_for_authentication?
+    active? && super
   end
 
   def pref
@@ -378,14 +335,17 @@ class User < Principal
     token && token.user.active? ? token.user : nil
   end
 
-  # Makes find_by_mail case-insensitive
-  def self.find_by_mail(mail)
-    where("LOWER(mail) = ?", mail.to_s.downcase).first
+  # Makes find_by_email case-insensitive
+  def self.find_by_email(email)
+    where(["LOWER(email) = ?", email.to_s.downcase]).first
+  end
+  class << self
+    alias_method :find_by_mail, :find_by_email # backward compatibility for migrations
   end
 
   # Returns true if the default admin account can no longer be used
   def self.default_admin_account_changed?
-    !User.active.find_by_login("admin").try(:check_password?, "admin")
+    !User.active.find_by_login("admin").try(:valid_password?, "admin")
   end
 
   def to_s
@@ -546,7 +506,10 @@ class User < Principal
   safe_attributes 'login',
     'firstname',
     'lastname',
-    'mail',
+    'email',
+    'password',
+    'password_confirmation',
+    'remember_me',
     'mail_notification',
     'language',
     'custom_field_values',
@@ -613,7 +576,7 @@ class User < Principal
   def self.anonymous
     anonymous_user = AnonymousUser.first
     if anonymous_user.nil?
-      anonymous_user = AnonymousUser.create(:lastname => 'Anonymous', :firstname => '', :mail => '', :login => '', :status => 0)
+      anonymous_user = AnonymousUser.create(:lastname => 'Anonymous', :firstname => '', :email => '', :login => '', :status => 0)
       raise 'Unable to create the anonymous user.' if anonymous_user.new_record?
     end
     anonymous_user
@@ -623,22 +586,20 @@ class User < Principal
   # It changes password storage scheme from SHA1(password) to SHA1(salt + SHA1(password))
   # This method is used in the SaltPasswords migration and is to be kept as is
   def self.salt_unsalted_passwords!
-    transaction do
-      User.where("salt IS NULL OR salt = ''").find_each do |user|
-        next if user.hashed_password.blank?
-        salt = User.generate_salt
-        hashed_password = User.hash_password("#{salt}#{user.hashed_password}")
-        User.where(:id => user.id).update_all(:salt => salt, :hashed_password => hashed_password)
+    salt_field, password_field = \
+      if ActiveRecord::Base.connection.column_exists?(:users, :encrypted_password)
+        [:password_salt, :encrypted_password]
+      else
+        [:salt, :hashed_password]
       end
-    end
-  end
 
-  protected
-
-  def validate_password_length
-    # Password length validation based on setting
-    if !password.nil? && password.size < Setting.password_min_length.to_i
-      errors.add(:password, :too_short, :count => Setting.password_min_length.to_i)
+    transaction do
+      User.where("#{salt_field} IS NULL OR #{salt_field} = ''").find_each do |user|
+        next if user.read_attribute(password_field).blank?
+        salt = encryptor_class.salt
+        hashed_password = encryptor_class.hash_password("#{salt}#{user.read_attribute(password_field)}")
+        User.where(:id => user.id).update_all(salt_field => salt, password_field => hashed_password)
+      end
     end
   end
 
@@ -669,16 +630,7 @@ class User < Principal
     WikiContent::Version.update_all ['author_id = ?', substitute.id], ['author_id = ?', id]
   end
 
-  # Return password digest
-  def self.hash_password(clear_password)
-    Digest::SHA1.hexdigest(clear_password || "")
-  end
-
-  # Returns a 128bits random salt as a hex string (32 chars long)
-  def self.generate_salt
-    Redmine::Utils.random_hex(16)
-  end
-
+  alias_attribute :last_login_on, :last_sign_in_at
 end
 
 class AnonymousUser < User
@@ -697,7 +649,7 @@ class AnonymousUser < User
   def logged?; false end
   def admin; false end
   def name(*args); I18n.t(:label_user_anonymous) end
-  def mail; nil end
+  def email; nil end
   def time_zone; nil end
   def rss_key; nil end
 
@@ -709,4 +661,13 @@ class AnonymousUser < User
   def destroy
     false
   end
+
+   def password_required?
+     false
+   end
+
+   def email_required?
+     false
+   end
+
 end

@@ -230,7 +230,7 @@ ro:
   field_login: Autentificare
   field_mail_notification: Notificări prin e-mail
   field_admin: Administrator
-  field_last_login_on: Ultima autentificare în
+  field_last_sign_in_at: Ultima autentificare în
   field_language: Limba
   field_effective_date: Data
   field_password: Parola

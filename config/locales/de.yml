@@ -269,7 +269,7 @@ de:
   field_login: Mitgliedsname
   field_mail_notification: Mailbenachrichtigung
   field_admin: Administrator
-  field_last_login_on: Letzte Anmeldung
+  field_last_sign_in_at: Letzte Anmeldung
   field_language: Sprache
   field_effective_date: Datum
   field_password: Kennwort

@@ -270,7 +270,7 @@ fr:
   field_login: "Identifiant "
   field_mail_notification: Notifications par mail
   field_admin: Administrateur
-  field_last_login_on: "Dernière connexion "
+  field_last_sign_in_at: "Dernière connexion "
   field_language: Langue
   field_effective_date: Date
   field_password: Mot de passe

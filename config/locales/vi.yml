@@ -283,7 +283,7 @@ vi:
   field_login: Đăng nhập
   field_mail_notification: Thông báo qua email
   field_admin: Quản trị
-  field_last_login_on: Kết nối cuối
+  field_last_sign_in_at: Kết nối cuối
   field_language: Ngôn ngữ
   field_effective_date: Ngày
   field_password: Mật mã

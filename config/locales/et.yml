@@ -278,7 +278,7 @@ et:
   field_login: "Kasutajanimi"
   field_mail_notification: "Teated e-kirjaga"
   field_admin: "Admin"
-  field_last_login_on: "Viimane ühendus"
+  field_last_sign_in_at: "Viimane ühendus"
   field_language: "Keel"
   field_effective_date: "Tähtaeg"
   field_password: "Parool"

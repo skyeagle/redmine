@@ -230,7 +230,7 @@ sl:
   field_login: Prijava
   field_mail_notification: E-poštna oznanila
   field_admin: Administrator
-  field_last_login_on: Zadnjič povezan(a)
+  field_last_sign_in_at: Zadnjič povezan(a)
   field_language: Jezik
   field_effective_date: Datum
   field_password: Geslo

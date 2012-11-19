@@ -259,7 +259,7 @@ cs:
   field_login: Přihlášení
   field_mail_notification: Emailová oznámení
   field_admin: Administrátor
-  field_last_login_on: Poslední přihlášení
+  field_last_sign_in_at: Poslední přihlášení
   field_language: Jazyk
   field_effective_date: Datum
   field_password: Heslo

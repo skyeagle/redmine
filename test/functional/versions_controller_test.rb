@@ -21,7 +21,7 @@ class VersionsControllerTest < ActionController::TestCase
   fixtures :projects, :versions, :issues, :users, :roles, :members, :member_roles, :enabled_modules, :issue_statuses, :issue_categories
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_index
@@ -110,14 +110,14 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => '1'
     assert_response :success
     assert_template 'new'
   end
 
   def test_new_from_issue_form
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :new, :project_id => '1'
     assert_response :success
     assert_template 'new'
@@ -125,7 +125,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_create
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     assert_difference 'Version.count' do
       post :create, :project_id => '1', :version => {:name => 'test_add_version'}
     end
@@ -136,7 +136,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_create_from_issue_form
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Version.count' do
       xhr :post, :create, :project_id => '1', :version => {:name => 'test_add_version_from_issue_form'}
     end
@@ -151,7 +151,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_create_from_issue_form_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Version.count' do
       xhr :post, :create, :project_id => '1', :version => {:name => ''}
     end
@@ -161,7 +161,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_get_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 2
     assert_response :success
     assert_template 'edit'
@@ -169,14 +169,14 @@ class VersionsControllerTest < ActionController::TestCase
 
   def test_close_completed
     Version.update_all("status = 'open'")
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :close_completed, :project_id => 'ecookbook'
     assert_redirected_to :controller => 'projects', :action => 'settings', :tab => 'versions', :id => 'ecookbook'
     assert_not_nil Version.find_by_status('closed')
   end
 
   def test_post_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 2,
                 :version => { :name => 'New version name',
                               :effective_date => Date.today.strftime("%Y-%m-%d")}
@@ -187,7 +187,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_post_update_with_validation_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 2,
                  :version => { :name => '',
                                :effective_date => Date.today.strftime("%Y-%m-%d")}
@@ -196,7 +196,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Version.count', -1 do
       delete :destroy, :id => 3
     end
@@ -205,7 +205,7 @@ class VersionsControllerTest < ActionController::TestCase
   end
 
   def test_destroy_version_in_use_should_fail
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Version.count' do
       delete :destroy, :id => 2
     end

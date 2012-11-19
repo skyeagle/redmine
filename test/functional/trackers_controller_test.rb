@@ -21,8 +21,8 @@ class TrackersControllerTest < ActionController::TestCase
   fixtures :trackers, :projects, :projects_trackers, :users, :issues, :custom_fields
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 1 # admin
+    sign_out(:user)
+    sign_in users(:users_001) # admin
   end
 
   def test_index
@@ -30,15 +30,15 @@ class TrackersControllerTest < ActionController::TestCase
     assert_response :success
     assert_template 'index'
   end
-  
+
   def test_index_by_anonymous_should_redirect_to_login_form
-    @request.session[:user_id] = nil
+    sign_out(:user)
     get :index
-    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Ftrackers'
+    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Ftrackers'
   end
-  
+
   def test_index_by_user_should_respond_with_406
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :index
     assert_response 406
   end

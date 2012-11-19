@@ -21,8 +21,8 @@ class AdminControllerTest < ActionController::TestCase
   fixtures :projects, :users, :roles
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 1 # admin
+    sign_out(:user)
+    sign_in users(:users_001) # admin
   end
 
   def test_index
@@ -94,7 +94,7 @@ class AdminControllerTest < ActionController::TestCase
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     user = User.find(1)
-    assert_equal [user.mail], mail.bcc
+    assert_equal [user.email], mail.bcc
   end
 
   def test_test_email_failure_should_display_the_error

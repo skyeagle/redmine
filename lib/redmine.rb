@@ -196,17 +196,17 @@ end
 
 Redmine::MenuManager.map :top_menu do |menu|
   menu.push :home, :home_path
-  menu.push :my_page, { :controller => 'my', :action => 'page' }, :if => Proc.new { User.current.logged? }
-  menu.push :projects, { :controller => 'projects', :action => 'index' }, :caption => :label_project_plural
-  menu.push :administration, { :controller => 'admin', :action => 'index' }, :if => Proc.new { User.current.admin? }, :last => true
+  menu.push :my_page, '/my/page', :if => Proc.new { User.current.logged? }
+  menu.push :projects, :projects_path, :caption => :label_project_plural
+  menu.push :administration, '/admin', :if => Proc.new { User.current.admin? }, :last => true
   menu.push :help, Redmine::Info.help_url, :last => true
 end
 
 Redmine::MenuManager.map :account_menu do |menu|
-  menu.push :login, :signin_path, :if => Proc.new { !User.current.logged? }
-  menu.push :register, :register_path, :if => Proc.new { !User.current.logged? && Setting.self_registration? }
-  menu.push :my_account, { :controller => 'my', :action => 'account' }, :if => Proc.new { User.current.logged? }
-  menu.push :logout, :signout_path, :if => Proc.new { User.current.logged? }
+  menu.push :login, :new_user_session_path, :if => Proc.new { !User.current.logged? }
+  menu.push :register, :new_user_registration_path, :if => Proc.new { !User.current.logged? && Setting.self_registration? }
+  menu.push :my_account, '/my/account', :if => Proc.new { User.current.logged? }
+  menu.push :logout, :destroy_user_session_path, :if => Proc.new { User.current.logged? }
 end
 
 Redmine::MenuManager.map :application_menu do |menu|
@@ -214,22 +214,22 @@ Redmine::MenuManager.map :application_menu do |menu|
 end
 
 Redmine::MenuManager.map :admin_menu do |menu|
-  menu.push :projects, {:controller => 'admin', :action => 'projects'}, :caption => :label_project_plural
-  menu.push :users, {:controller => 'users'}, :caption => :label_user_plural
-  menu.push :groups, {:controller => 'groups'}, :caption => :label_group_plural
-  menu.push :roles, {:controller => 'roles'}, :caption => :label_role_and_permissions
-  menu.push :trackers, {:controller => 'trackers'}, :caption => :label_tracker_plural
-  menu.push :issue_statuses, {:controller => 'issue_statuses'}, :caption => :label_issue_status_plural,
+  menu.push :projects, '/admin/projects', :caption => :label_project_plural
+  menu.push :users, :users_path, :caption => :label_user_plural
+  menu.push :groups, :groups_path, :caption => :label_group_plural
+  menu.push :roles, :roles_path, :caption => :label_role_and_permissions
+  menu.push :trackers, :trackers_path, :caption => :label_tracker_plural
+  menu.push :issue_statuses, :issue_statuses_path, :caption => :label_issue_status_plural,
             :html => {:class => 'issue_statuses'}
   menu.push :workflows, {:controller => 'workflows', :action => 'edit'}, :caption => :label_workflow
-  menu.push :custom_fields, {:controller => 'custom_fields'},  :caption => :label_custom_field_plural,
+  menu.push :custom_fields, :custom_fields_path,  :caption => :label_custom_field_plural,
             :html => {:class => 'custom_fields'}
-  menu.push :enumerations, {:controller => 'enumerations'}
-  menu.push :settings, {:controller => 'settings'}
-  menu.push :ldap_authentication, {:controller => 'auth_sources', :action => 'index'},
+  menu.push :enumerations, :enumerations_path
+  menu.push :settings, :settings_path
+  menu.push :ldap_authentication, :auth_sources_path,
             :html => {:class => 'server_authentication'}
-  menu.push :plugins, {:controller => 'admin', :action => 'plugins'}, :last => true
-  menu.push :info, {:controller => 'admin', :action => 'info'}, :caption => :label_information_plural, :last => true
+  menu.push :plugins, '/admin/plugins', :last => true
+  menu.push :info, '/admin/info', :caption => :label_information_plural, :last => true
 end
 
 Redmine::MenuManager.map :project_menu do |menu|

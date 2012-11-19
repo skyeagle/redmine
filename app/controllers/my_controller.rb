@@ -65,45 +65,6 @@ class MyController < ApplicationController
     end
   end
 
-  # Destroys user's account
-  def destroy
-    @user = User.current
-    unless @user.own_account_deletable?
-      redirect_to :action => 'account'
-      return
-    end
-
-    if request.post? && params[:confirm]
-      @user.destroy
-      if @user.destroyed?
-        logout_user
-        flash[:notice] = l(:notice_account_deleted)
-      end
-      redirect_to home_path
-    end
-  end
-
-  # Manage user's password
-  def password
-    @user = User.current
-    unless @user.change_password_allowed?
-      flash[:error] = l(:notice_can_t_change_password)
-      redirect_to :action => 'account'
-      return
-    end
-    if request.post?
-      if @user.check_password?(params[:password])
-        @user.password, @user.password_confirmation = params[:new_password], params[:new_password_confirmation]
-        if @user.save
-          flash[:notice] = l(:notice_account_password_updated)
-          redirect_to :action => 'account'
-        end
-      else
-        flash[:error] = l(:notice_account_wrong_password)
-      end
-    end
-  end
-
   # Create a new feeds key
   def reset_rss_key
     if request.post?

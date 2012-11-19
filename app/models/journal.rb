@@ -97,7 +97,7 @@ class Journal < ActiveRecord::Base
     if private_notes?
       notified = notified.select {|user| user.allowed_to?(:view_private_notes, journalized.project)}
     end
-    notified.map(&:mail)
+    notified.map(&:email)
   end
 
   def watcher_recipients
@@ -105,7 +105,7 @@ class Journal < ActiveRecord::Base
     if private_notes?
       notified = notified.select {|user| user.allowed_to?(:view_private_notes, journalized.project)}
     end
-    notified.map(&:mail)
+    notified.map(&:email)
   end
 
   private

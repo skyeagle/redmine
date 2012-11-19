@@ -32,7 +32,7 @@ class Issue < ActiveRecord::Base
   has_many :visible_journals,
     :class_name => 'Journal',
     :as => :journalized,
-    :conditions => Proc.new { 
+    :conditions => Proc.new {
       ["(#{Journal.table_name}.private_notes = ? OR (#{Project.allowed_to_condition(User.current, :view_private_notes)}))", false]
     },
     :readonly => true
@@ -85,7 +85,7 @@ class Issue < ActiveRecord::Base
 
   before_create :default_assign
   before_save :close_duplicates, :update_done_ratio_from_issue_status, :force_updated_on_change
-  after_save {|issue| issue.send :after_project_change if !issue.id_changed? && issue.project_id_changed?} 
+  after_save {|issue| issue.send :after_project_change if !issue.id_changed? && issue.project_id_changed?}
   after_save :reschedule_following_issues, :update_nested_set_attributes, :update_parent_attributes, :create_journal
   # Should be after_create but would be called before previous after_save callbacks
   after_save :after_create_from_copy
@@ -184,7 +184,7 @@ class Issue < ActiveRecord::Base
     self.status = issue.status
     self.author = User.current
     unless options[:attachments] == false
-      self.attachments = issue.attachments.map do |attachement| 
+      self.attachments = issue.attachments.map do |attachement|
         attachement.copy(:container => self)
       end
     end
@@ -361,10 +361,10 @@ class Issue < ActiveRecord::Base
     :if => lambda {|issue, user| user.allowed_to?(:add_issue_notes, issue.project)}
 
   safe_attributes 'private_notes',
-    :if => lambda {|issue, user| !issue.new_record? && user.allowed_to?(:set_notes_private, issue.project)} 
+    :if => lambda {|issue, user| !issue.new_record? && user.allowed_to?(:set_notes_private, issue.project)}
 
   safe_attributes 'watcher_user_ids',
-    :if => lambda {|issue, user| issue.new_record? && user.allowed_to?(:add_issue_watchers, issue.project)} 
+    :if => lambda {|issue, user| issue.new_record? && user.allowed_to?(:add_issue_watchers, issue.project)}
 
   safe_attributes 'is_private',
     :if => lambda {|issue, user|
@@ -723,7 +723,7 @@ class Issue < ActiveRecord::Base
         initial_status = IssueStatus.find_by_id(status_id_was)
       end
       initial_status ||= status
-  
+
       statuses = initial_status.find_new_statuses_allowed_to(
         user.admin ? Role.all : user.roles_for_project(project),
         tracker,
@@ -766,7 +766,7 @@ class Issue < ActiveRecord::Base
 
   # Returns the email addresses that should be notified
   def recipients
-    notified_users.collect(&:mail)
+    notified_users.collect(&:email)
   end
 
   # Returns the number of hours spent on this issue
@@ -1062,13 +1062,13 @@ class Issue < ActiveRecord::Base
   end
 
   def self.by_subproject(project)
-    ActiveRecord::Base.connection.select_all("select    s.id as status_id, 
-                                                s.is_closed as closed, 
+    ActiveRecord::Base.connection.select_all("select    s.id as status_id,
+                                                s.is_closed as closed,
                                                 #{Issue.table_name}.project_id as project_id,
-                                                count(#{Issue.table_name}.id) as total 
-                                              from 
+                                                count(#{Issue.table_name}.id) as total
+                                              from
                                                 #{Issue.table_name}, #{Project.table_name}, #{IssueStatus.table_name} s
-                                              where 
+                                              where
                                                 #{Issue.table_name}.status_id=s.id
                                                 and #{Issue.table_name}.project_id = #{Project.table_name}.id
                                                 and #{visible_condition(User.current, :project => project, :with_subprojects => true)}
@@ -1332,11 +1332,11 @@ class Issue < ActiveRecord::Base
           before = @custom_values_before_change[c.custom_field_id]
           after = c.value
           next if before == after || (before.blank? && after.blank?)
-          
+
           if before.is_a?(Array) || after.is_a?(Array)
             before = [before] unless before.is_a?(Array)
             after = [after] unless after.is_a?(Array)
-            
+
             # values removed
             (before - after).reject(&:blank?).each do |value|
               @current_journal.details << JournalDetail.new(:property => 'cf',
@@ -1379,14 +1379,14 @@ class Issue < ActiveRecord::Base
 
     where = "#{Issue.table_name}.#{select_field}=j.id"
 
-    ActiveRecord::Base.connection.select_all("select    s.id as status_id, 
-                                                s.is_closed as closed, 
+    ActiveRecord::Base.connection.select_all("select    s.id as status_id,
+                                                s.is_closed as closed,
                                                 j.id as #{select_field},
-                                                count(#{Issue.table_name}.id) as total 
-                                              from 
+                                                count(#{Issue.table_name}.id) as total
+                                              from
                                                   #{Issue.table_name}, #{Project.table_name}, #{IssueStatus.table_name} s, #{joins} j
-                                              where 
-                                                #{Issue.table_name}.status_id=s.id 
+                                              where
+                                                #{Issue.table_name}.status_id=s.id
                                                 and #{where}
                                                 and #{Issue.table_name}.project_id=#{Project.table_name}.id
                                                 and #{visible_condition(User.current, :project => project)}

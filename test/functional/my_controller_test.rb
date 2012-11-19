@@ -19,10 +19,10 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class MyControllerTest < ActionController::TestCase
   fixtures :users, :user_preferences, :roles, :projects, :members, :member_roles,
-  :issues, :issue_statuses, :trackers, :enumerations, :custom_fields, :auth_sources
+  :issues, :issue_statuses, :trackers, :enumerations, :custom_fields
 
   def setup
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
   end
 
   def test_index
@@ -105,78 +105,7 @@ class MyControllerTest < ActionController::TestCase
 
   def test_my_account_should_show_destroy_link
     get :account
-    assert_select 'a[href=/my/account/destroy]'
-  end
-
-  def test_get_destroy_should_display_the_destroy_confirmation
-    get :destroy
-    assert_response :success
-    assert_template 'destroy'
-    assert_select 'form[action=/my/account/destroy]' do
-      assert_select 'input[name=confirm]'
-    end
-  end
-
-  def test_post_destroy_without_confirmation_should_not_destroy_account
-    assert_no_difference 'User.count' do
-      post :destroy
-    end
-    assert_response :success
-    assert_template 'destroy'
-  end
-
-  def test_post_destroy_without_confirmation_should_destroy_account
-    assert_difference 'User.count', -1 do
-      post :destroy, :confirm => '1'
-    end
-    assert_redirected_to '/'
-    assert_match /deleted/i, flash[:notice]
-  end
-
-  def test_post_destroy_with_unsubscribe_not_allowed_should_not_destroy_account
-    User.any_instance.stubs(:own_account_deletable?).returns(false)
-
-    assert_no_difference 'User.count' do
-      post :destroy, :confirm => '1'
-    end
-    assert_redirected_to '/my/account'
-  end
-
-  def test_change_password
-    get :password
-    assert_response :success
-    assert_template 'password'
-
-    # non matching password confirmation
-    post :password, :password => 'jsmith',
-                    :new_password => 'secret123',
-                    :new_password_confirmation => 'secret1234'
-    assert_response :success
-    assert_template 'password'
-    assert_error_tag :content => /Password doesn&#x27;t match confirmation/
-
-    # wrong password
-    post :password, :password => 'wrongpassword',
-                    :new_password => 'secret123',
-                    :new_password_confirmation => 'secret123'
-    assert_response :success
-    assert_template 'password'
-    assert_equal 'Wrong password', flash[:error]
-
-    # good password
-    post :password, :password => 'jsmith',
-                    :new_password => 'secret123',
-                    :new_password_confirmation => 'secret123'
-    assert_redirected_to '/my/account'
-    assert User.try_to_login('jsmith', 'secret123')
-  end
-
-  def test_change_password_should_redirect_if_user_cannot_change_its_password
-    User.find(2).update_attribute(:auth_source_id, 1)
-
-    get :password
-    assert_not_nil flash[:error]
-    assert_redirected_to '/my/account'
+    assert_select 'a[href=/users/register][data-method=delete][data-confirm~=sure]'
   end
 
   def test_page_layout

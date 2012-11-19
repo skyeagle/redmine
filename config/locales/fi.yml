@@ -251,7 +251,7 @@ fi:
   field_login: Kirjautuminen
   field_mail_notification: Sähköposti muistutukset
   field_admin: Ylläpitäjä
-  field_last_login_on: Viimeinen yhteys
+  field_last_sign_in_at: Viimeinen yhteys
   field_language: Kieli
   field_effective_date: Päivä
   field_password: Salasana

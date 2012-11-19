@@ -30,7 +30,7 @@ class PreviewsControllerTest < ActionController::TestCase
            :news
 
   def test_preview_new_issue
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :issue, :project_id => '1', :issue => {:description => 'Foo'}
     assert_response :success
     assert_template 'preview'
@@ -38,7 +38,7 @@ class PreviewsControllerTest < ActionController::TestCase
   end
 
   def test_preview_issue_notes
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :issue, :project_id => '1', :id => 1,
          :issue => {:description => Issue.find(1).description, :notes => 'Foo'}
     assert_response :success
@@ -47,7 +47,7 @@ class PreviewsControllerTest < ActionController::TestCase
   end
 
   def test_preview_journal_notes_for_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :issue, :project_id => '1', :id => 1, :issue => {:notes => 'Foo'}
     assert_response :success
     assert_template 'preview'

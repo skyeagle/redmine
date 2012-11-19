@@ -47,12 +47,12 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   self.use_transactional_fixtures = false
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_update_stale_issue_should_not_update_the_issue
     issue = Issue.find(2)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_no_difference 'Journal.count' do
       assert_no_difference 'TimeEntry.count' do
@@ -82,7 +82,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   def test_update_stale_issue_should_save_attachments
     set_tmp_attachments_directory
     issue = Issue.find(2)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_no_difference 'Journal.count' do
       assert_no_difference 'TimeEntry.count' do
@@ -109,7 +109,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
 
   def test_update_stale_issue_without_notes_should_not_show_add_notes_option
     issue = Issue.find(2)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     put :update, :id => issue.id,
           :issue => {
@@ -125,7 +125,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   end
 
   def test_update_stale_issue_should_show_conflicting_journals
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     put :update, :id => 1,
           :issue => {
@@ -143,7 +143,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   end
 
   def test_update_stale_issue_without_previous_journal_should_show_all_journals
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     put :update, :id => 1,
           :issue => {
@@ -164,17 +164,18 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   def test_update_stale_issue_should_show_private_journals_with_permission_only
     journal = Journal.create!(:journalized => Issue.find(1), :notes => 'Privates notes', :private_notes => true, :user_id => 1)
 
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 1, :issue => {:fixed_version_id => 4, :lock_version => 2}, :last_journal_id => ''
     assert_include journal, assigns(:conflict_journals)
 
     Role.find(1).remove_permission! :view_private_notes
+    User.current.reload
     put :update, :id => 1, :issue => {:fixed_version_id => 4, :lock_version => 2}, :last_journal_id => ''
     assert_not_include journal, assigns(:conflict_journals)
   end
 
   def test_update_stale_issue_with_overwrite_conflict_resolution_should_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_difference 'Journal.count' do
       put :update, :id => 1,
@@ -195,7 +196,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   end
 
   def test_update_stale_issue_with_add_notes_conflict_resolution_should_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_difference 'Journal.count' do
       put :update, :id => 1,
@@ -216,7 +217,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   end
 
   def test_update_stale_issue_with_cancel_conflict_resolution_should_redirect_without_updating
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_no_difference 'Journal.count' do
       put :update, :id => 1,
@@ -234,7 +235,7 @@ class IssuesControllerTransactionTest < ActionController::TestCase
   end
 
   def test_put_update_with_spent_time_and_failure_should_not_add_spent_time
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_no_difference('TimeEntry.count') do
       put :update,

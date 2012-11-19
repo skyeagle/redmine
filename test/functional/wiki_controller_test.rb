@@ -23,7 +23,7 @@ class WikiControllerTest < ActionController::TestCase
            :wiki_content_versions, :attachments
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_show_start_page
@@ -38,7 +38,7 @@ class WikiControllerTest < ActionController::TestCase
                            :child => { :tag => 'a', :attributes => { :href => '/projects/ecookbook/wiki/Page_with_an_inline_image' },
                                                     :content => 'Page with an inline image' } }
   end
-  
+
   def test_export_link
     Role.anonymous.add_permission! :export_wiki_pages
     get :show, :project_id => 'ecookbook'
@@ -72,7 +72,7 @@ class WikiControllerTest < ActionController::TestCase
     Role.anonymous.remove_permission! :view_wiki_edits
 
     get :show, :project_id => 'ecookbook', :id => 'CookBook_documentation', :version => '2'
-    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fprojects%2Fecookbook%2Fwiki%2FCookBook_documentation%2F2'
+    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fprojects%2Fecookbook%2Fwiki%2FCookBook_documentation%2F2'
   end
 
   def test_show_first_version
@@ -103,9 +103,9 @@ class WikiControllerTest < ActionController::TestCase
     assert_tag :tag => 'div', :attributes => {:id => 'sidebar'},
                               :content => /Side bar content for test_show_with_sidebar/
   end
-  
+
   def test_show_should_display_section_edit_links
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :id => 'Page with sections'
     assert_no_tag 'a', :attributes => {
       :href => '/projects/ecookbook/wiki/Page_with_sections/edit?section=1'
@@ -119,7 +119,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_current_version_should_display_section_edit_links
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :id => 'Page with sections', :version => 3
 
     assert_tag 'a', :attributes => {
@@ -128,7 +128,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_old_version_should_not_display_section_edit_links
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :id => 'Page with sections', :version => 2
 
     assert_no_tag 'a', :attributes => {
@@ -142,14 +142,14 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_unexistent_page_with_edit_right
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :id => 'Unexistent page'
     assert_response :success
     assert_template 'edit'
   end
 
   def test_show_unexistent_page_with_parent_should_preselect_parent
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :id => 'Unexistent page', :parent => 'Another_page'
     assert_response :success
     assert_template 'edit'
@@ -165,7 +165,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_create_page
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'WikiPage.count' do
       assert_difference 'WikiContent.count' do
         put :update, :project_id => 1,
@@ -184,7 +184,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_create_page_with_attachments
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'WikiPage.count' do
       assert_difference 'Attachment.count' do
         put :update, :project_id => 1,
@@ -201,7 +201,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_create_page_with_parent
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'WikiPage.count' do
       put :update, :project_id => 1, :id => 'New page',
         :content => {:text => "h1. New page\n\nThis is a new page", :version => 0},
@@ -212,7 +212,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_edit_page
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :project_id => 'ecookbook', :id => 'Another_page'
 
     assert_response :success
@@ -224,12 +224,12 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_edit_section
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :project_id => 'ecookbook', :id => 'Page_with_sections', :section => 2
 
     assert_response :success
     assert_template 'edit'
-    
+
     page = WikiPage.find_by_title('Page_with_sections')
     section, hash = Redmine::WikiFormatting::Textile::Formatter.new(page.content.text).get_section(2)
 
@@ -243,14 +243,14 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_edit_invalid_section_should_respond_with_404
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :project_id => 'ecookbook', :id => 'Page_with_sections', :section => 10
 
     assert_response 404
   end
 
   def test_update_page
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'WikiPage.count' do
       assert_no_difference 'WikiContent.count' do
         assert_difference 'WikiContent::Version.count' do
@@ -273,7 +273,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_page_with_parent
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'WikiPage.count' do
       assert_no_difference 'WikiContent.count' do
         assert_difference 'WikiContent::Version.count' do
@@ -298,7 +298,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_page_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'WikiPage.count' do
       assert_no_difference 'WikiContent.count' do
         assert_no_difference 'WikiContent::Version.count' do
@@ -321,7 +321,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_page_with_parent_change_only_should_not_create_content_version
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'WikiPage.count' do
       assert_no_difference 'WikiContent.count' do
         assert_no_difference 'WikiContent::Version.count' do
@@ -342,7 +342,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_page_with_attachments_only_should_not_create_content_version
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'WikiPage.count' do
       assert_no_difference 'WikiContent.count' do
         assert_no_difference 'WikiContent::Version.count' do
@@ -364,7 +364,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_stale_page_should_not_raise_an_error
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     c = Wiki.find(1).find_page('Another_page').content
     c.text = 'Previous text'
     c.save!
@@ -400,7 +400,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_section
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     page = WikiPage.find_by_title('Page_with_sections')
     section, hash = Redmine::WikiFormatting::Textile::Formatter.new(page.content.text).get_section(2)
     text = page.content.text
@@ -423,7 +423,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_section_should_allow_stale_page_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     page = WikiPage.find_by_title('Page_with_sections')
     section, hash = Redmine::WikiFormatting::Textile::Formatter.new(page.content.text).get_section(2)
     text = page.content.text
@@ -448,7 +448,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_update_section_should_not_allow_stale_section_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_no_difference 'WikiPage.count' do
       assert_no_difference 'WikiContent.count' do
@@ -477,7 +477,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_preview
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :post, :preview, :project_id => 1, :id => 'CookBook_documentation',
                                    :content => { :comments => '',
                                                  :text => 'this is a *previewed text*',
@@ -488,7 +488,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_preview_new_page
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :post, :preview, :project_id => 1, :id => 'New page',
                                    :content => { :text => 'h1. New page',
                                                  :comments => '',
@@ -499,7 +499,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_history
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :history, :project_id => 'ecookbook', :id => 'CookBook_documentation'
     assert_response :success
     assert_template 'history'
@@ -515,7 +515,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_history_with_one_version
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :history, :project_id => 'ecookbook', :id => 'Another_page'
     assert_response :success
     assert_template 'history'
@@ -585,7 +585,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_get_rename
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :rename, :project_id => 1, :id => 'Another_page'
     assert_response :success
     assert_template 'rename'
@@ -599,7 +599,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_get_rename_child_page
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :rename, :project_id => 1, :id => 'Child_1'
     assert_response :success
     assert_template 'rename'
@@ -617,7 +617,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_rename_with_redirect
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :rename, :project_id => 1, :id => 'Another_page',
                             :wiki_page => { :title => 'Another renamed page',
                                             :redirect_existing_links => 1 }
@@ -629,7 +629,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_rename_without_redirect
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :rename, :project_id => 1, :id => 'Another_page',
                             :wiki_page => { :title => 'Another renamed page',
                                             :redirect_existing_links => "0" }
@@ -640,7 +640,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_rename_with_parent_assignment
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :rename, :project_id => 1, :id => 'Another_page',
       :wiki_page => { :title => 'Another page', :redirect_existing_links => "0", :parent_id => '4' }
     assert_redirected_to :action => 'show', :project_id => 'ecookbook', :id => 'Another_page'
@@ -648,7 +648,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_rename_with_parent_unassignment
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :rename, :project_id => 1, :id => 'Child_1',
       :wiki_page => { :title => 'Child 1', :redirect_existing_links => "0", :parent_id => '' }
     assert_redirected_to :action => 'show', :project_id => 'ecookbook', :id => 'Child_1'
@@ -656,13 +656,13 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_destroy_a_page_without_children_should_not_ask_confirmation
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     delete :destroy, :project_id => 1, :id => 'Child_2'
     assert_redirected_to :action => 'index', :project_id => 'ecookbook'
   end
 
   def test_destroy_parent_should_ask_confirmation
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference('WikiPage.count') do
       delete :destroy, :project_id => 1, :id => 'Another_page'
     end
@@ -676,7 +676,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_destroy_parent_with_nullify_should_delete_parent_only
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference('WikiPage.count', -1) do
       delete :destroy, :project_id => 1, :id => 'Another_page', :todo => 'nullify'
     end
@@ -685,7 +685,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_destroy_parent_with_cascade_should_delete_descendants
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference('WikiPage.count', -4) do
       delete :destroy, :project_id => 1, :id => 'Another_page', :todo => 'destroy'
     end
@@ -695,7 +695,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_destroy_parent_with_reassign
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference('WikiPage.count', -1) do
       delete :destroy, :project_id => 1, :id => 'Another_page', :todo => 'reassign', :reassign_to_id => 1
     end
@@ -705,7 +705,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_destroy_version
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'WikiContent::Version.count', -1 do
       assert_no_difference 'WikiContent.count' do
         assert_no_difference 'WikiPage.count' do
@@ -742,7 +742,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_export_to_html
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :export, :project_id => 'ecookbook'
 
     assert_response :success
@@ -756,7 +756,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_export_to_pdf
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :export, :project_id => 'ecookbook', :format => 'pdf'
 
     assert_response :success
@@ -768,7 +768,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_export_without_permission_should_be_denied
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Role.find_by_name('Manager').remove_permission! :export_wiki_pages
     get :export, :project_id => 'ecookbook'
 
@@ -794,7 +794,7 @@ class WikiControllerTest < ActionController::TestCase
   def test_protect_page
     page = WikiPage.find_by_wiki_id_and_title(1, 'Another_page')
     assert !page.protected?
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :protect, :project_id => 1, :id => page.title, :protected => '1'
     assert_redirected_to :action => 'show', :project_id => 'ecookbook', :id => 'Another_page'
     assert page.reload.protected?
@@ -803,14 +803,14 @@ class WikiControllerTest < ActionController::TestCase
   def test_unprotect_page
     page = WikiPage.find_by_wiki_id_and_title(1, 'CookBook_documentation')
     assert page.protected?
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :protect, :project_id => 1, :id => page.title, :protected => '0'
     assert_redirected_to :action => 'show', :project_id => 'ecookbook', :id => 'CookBook_documentation'
     assert !page.reload.protected?
   end
 
   def test_show_page_with_edit_link
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1
     assert_response :success
     assert_template 'show'
@@ -818,7 +818,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_page_without_edit_link
-    @request.session[:user_id] = 4
+    sign_in users(:users_004)
     get :show, :project_id => 1
     assert_response :success
     assert_template 'show'
@@ -826,7 +826,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_pdf
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :format => 'pdf'
     assert_response :success
     assert_not_nil assigns(:page)
@@ -836,7 +836,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_html
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :format => 'html'
     assert_response :success
     assert_not_nil assigns(:page)
@@ -847,7 +847,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_versioned_html
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :format => 'html', :version => 2
     assert_response :success
     assert_not_nil assigns(:content)
@@ -859,7 +859,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_txt
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :format => 'txt'
     assert_response :success
     assert_not_nil assigns(:page)
@@ -870,7 +870,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_show_versioned_txt
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :project_id => 1, :format => 'txt', :version => 2
     assert_response :success
     assert_not_nil assigns(:content)
@@ -883,7 +883,7 @@ class WikiControllerTest < ActionController::TestCase
 
   def test_edit_unprotected_page
     # Non members can edit unprotected wiki pages
-    @request.session[:user_id] = 4
+    sign_in users(:users_004)
     get :edit, :project_id => 1, :id => 'Another_page'
     assert_response :success
     assert_template 'edit'
@@ -891,13 +891,13 @@ class WikiControllerTest < ActionController::TestCase
 
   def test_edit_protected_page_by_nonmember
     # Non members can't edit protected wiki pages
-    @request.session[:user_id] = 4
+    sign_in users(:users_004)
     get :edit, :project_id => 1, :id => 'CookBook_documentation'
     assert_response 403
   end
 
   def test_edit_protected_page_by_member
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :project_id => 1, :id => 'CookBook_documentation'
     assert_response :success
     assert_template 'edit'
@@ -909,7 +909,7 @@ class WikiControllerTest < ActionController::TestCase
   end
 
   def test_add_attachment
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Attachment.count' do
       post :add_attachment, :project_id => 1, :id => 'CookBook_documentation',
         :attachments => {'1' => {'file' => uploaded_test_file('testfile.txt', 'text/plain'), 'description' => 'test file'}}

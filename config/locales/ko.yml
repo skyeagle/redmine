@@ -284,7 +284,7 @@ ko:
   field_login: 로그인
   field_mail_notification: 메일 알림
   field_admin: 관리자
-  field_last_login_on: 마지막 로그인
+  field_last_sign_in_at: 마지막 로그인
   field_language: 언어
   field_effective_date: 날짜
   field_password: 비밀번호

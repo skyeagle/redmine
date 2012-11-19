@@ -23,7 +23,7 @@ class DocumentsControllerTest < ActionController::TestCase
            :groups_users, :attachments
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_index
@@ -89,7 +89,7 @@ LOREM
   end
 
   def test_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => 1
     assert_response :success
     assert_template 'new'
@@ -97,7 +97,7 @@ LOREM
 
   def test_create_with_one_attachment
     ActionMailer::Base.deliveries.clear
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     set_tmp_attachments_directory
 
     with_settings :notified_events => %w(document_added) do
@@ -118,7 +118,7 @@ LOREM
   end
 
   def test_create_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Document.count' do
       post :create, :project_id => 'ecookbook', :document => { :title => ''}
     end
@@ -127,7 +127,7 @@ LOREM
   end
 
   def test_create_non_default_category
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     category2 = Enumeration.find_by_name('User documentation')
     category2.update_attributes(:is_default => true)
     category1 = Enumeration.find_by_name('Uncategorized')
@@ -144,14 +144,14 @@ LOREM
   end
 
   def test_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :id => 1
     assert_response :success
     assert_template 'edit'
   end
 
   def test_update
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 1, :document => {:title => 'test_update'}
     assert_redirected_to '/documents/1'
     document = Document.find(1)
@@ -159,14 +159,14 @@ LOREM
   end
 
   def test_update_with_failure
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     put :update, :id => 1, :document => {:title => ''}
     assert_response :success
     assert_template 'edit'
   end
 
   def test_destroy
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Document.count', -1 do
       delete :destroy, :id => 1
     end
@@ -175,7 +175,7 @@ LOREM
   end
 
   def test_add_attachment
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Attachment.count' do
       post :add_attachment, :id => 1,
         :attachments => {'1' => {'file' => uploaded_test_file('testfile.txt', 'text/plain')}}

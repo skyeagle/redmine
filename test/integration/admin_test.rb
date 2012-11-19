@@ -34,7 +34,7 @@ class AdminTest < ActionController::IntegrationTest
     assert_template "users/new"
     post "/users",
          :user => { :login => "psmith", :firstname => "Paul",
-                    :lastname => "Smith", :mail => "psmith@somenet.foo",
+                    :lastname => "Smith", :email => "psmith@somenet.foo",
                     :language => "en", :password => "psmith09",
                     :password_confirmation => "psmith09" }
 
@@ -42,13 +42,13 @@ class AdminTest < ActionController::IntegrationTest
     assert_kind_of User, user
     assert_redirected_to "/users/#{ user.id }/edit"
 
-    logged_user = User.try_to_login("psmith", "psmith09")
+    logged_user = User.find_first_by_auth_conditions(:login => "psmith")
     assert_kind_of User, logged_user
     assert_equal "Paul", logged_user.firstname
 
     put "users/#{user.id}", :id => user.id, :user => { :status => User::STATUS_LOCKED }
     assert_redirected_to "/users/#{ user.id }/edit"
-    locked_user = User.try_to_login("psmith", "psmith09")
+    locked_user = User.find_first_by_auth_conditions(:login => "psmith")
     assert_equal nil, locked_user
   end
 
@@ -57,6 +57,6 @@ class AdminTest < ActionController::IntegrationTest
          :user => { :login => 'psmith', :firstname => 'Paul'},
          :password => "psmith09", :password_confirmation => "psmith09"
     assert_response :redirect
-    assert_redirected_to "/login?back_url=http%3A%2F%2Fwww.example.com%2Fusers"
+    assert_redirected_to "/users/sign_in?back_url=http%3A%2F%2Fwww.example.com%2Fusers"
   end
 end

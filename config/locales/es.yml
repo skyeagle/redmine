@@ -296,7 +296,7 @@ es:
   field_issue: Petición
   field_issue_to: Petición relacionada
   field_language: Idioma
-  field_last_login_on: Última conexión
+  field_last_sign_in_at: Última conexión
   field_lastname: Apellido
   field_login: Identificador
   field_mail: Correo electrónico

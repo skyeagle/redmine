@@ -4,7 +4,7 @@
 <%=l(:field_created_on)%>: <%= format_time(@user.created_on) %></p>
 
 <% if @user.own_account_deletable? %>
-  <p><%= link_to(l(:button_delete_my_account), {:action => 'destroy'}, :class => 'icon icon-del') %></p>
+  <p><%= link_to(l(:button_delete_my_account), registration_path(@user), :data => { :confirm => l(:text_account_destroy_confirmation) }, :method => :delete, :class => 'icon icon-del') %></p>
 <% end %>
 
 <h4><%= l(:label_feeds_access_key) %></h4>
@@ -15,7 +15,7 @@
 <% else %>
 <%= l(:label_missing_feeds_access_key) %>
 <% end %>
-(<%= link_to l(:button_reset), {:action => 'reset_rss_key'}, :method => :post %>)
+(<%= link_to l(:button_reset), '/my/reset_rss_key', :method => :post %>)
 </p>
 
 <% if Setting.rest_api_enabled? %>
@@ -31,6 +31,6 @@
 <% else %>
 <%= l(:label_missing_api_access_key) %>
 <% end %>
-(<%= link_to l(:button_reset), {:action => 'reset_api_key'}, :method => :post %>)
+(<%= link_to l(:button_reset), '/my/reset_api_key', :method => :post %>)
 </p>
 <% end %>

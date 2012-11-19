@@ -21,7 +21,7 @@ class EnumerationsControllerTest < ActionController::TestCase
   fixtures :enumerations, :issues, :users
 
   def setup
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
   end
 
   def test_index
@@ -31,7 +31,7 @@ class EnumerationsControllerTest < ActionController::TestCase
   end
 
   def test_index_should_require_admin
-    @request.session[:user_id] = nil
+    sign_out(:user)
     get :index
     assert_response 302
   end

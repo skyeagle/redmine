@@ -33,12 +33,12 @@ class ProjectEnumerationsControllerTest < ActionController::TestCase
   self.use_transactional_fixtures = false
 
   def setup
-    @request.session[:user_id] = nil
+    sign_out(:user)
     Setting.default_language = 'en'
   end
 
   def test_update_to_override_system_activities
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     billable_field = TimeEntryActivityCustomField.find_by_name("Billable")
 
     put :update, :project_id => 1, :enumerations => {
@@ -88,7 +88,7 @@ class ProjectEnumerationsControllerTest < ActionController::TestCase
   end
 
   def test_update_will_update_project_specific_activities
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
 
     project_activity = TimeEntryActivity.new({
                                                :name => 'Project Specific',
@@ -132,7 +132,7 @@ class ProjectEnumerationsControllerTest < ActionController::TestCase
   def test_update_when_creating_new_activities_will_convert_existing_data
     assert_equal 3, TimeEntry.find_all_by_activity_id_and_project_id(9, 1).size
 
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     put :update, :project_id => 1, :enumerations => {
       "9"=> {"parent_id"=>"9", "custom_field_values"=>{"7" => "1"}, "active"=>"0"} # Design, De-activate
     }
@@ -156,7 +156,7 @@ class ProjectEnumerationsControllerTest < ActionController::TestCase
     assert_equal 3, TimeEntry.find_all_by_activity_id_and_project_id(9, 1).size
     assert_equal 1, TimeEntry.find_all_by_activity_id_and_project_id(10, 1).size
 
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     put :update, :project_id => 1, :enumerations => {
       "9"=> {"parent_id"=>"9", "custom_field_values"=>{"7" => "1"}, "active"=>"0"}, # Design
       "10"=> {"parent_id"=>"10", "custom_field_values"=>{"7"=>"0"}, "active"=>"1"} # Development, Change custom value
@@ -170,7 +170,7 @@ class ProjectEnumerationsControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     project_activity = TimeEntryActivity.new({
                                                :name => 'Project Specific',
                                                :parent => TimeEntryActivity.first,
@@ -195,7 +195,7 @@ class ProjectEnumerationsControllerTest < ActionController::TestCase
   end
 
   def test_destroy_should_reassign_time_entries_back_to_the_system_activity
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     project_activity = TimeEntryActivity.new({
                                                :name => 'Project Specific Design',
                                                :parent => TimeEntryActivity.find(9),

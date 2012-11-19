@@ -23,7 +23,7 @@ class ProjectsControllerTest < ActionController::TestCase
            :attachments, :custom_fields, :custom_values, :time_entries
 
   def setup
-    @request.session[:user_id] = nil
+    sign_out(:user)
     Setting.default_language = 'en'
   end
 
@@ -56,7 +56,7 @@ class ProjectsControllerTest < ActionController::TestCase
   context "#index" do
     context "by non-admin user with view_time_entries permission" do
       setup do
-        @request.session[:user_id] = 3
+        sign_in users(:users_003)
       end
       should "show overall spent time link" do
         get :index
@@ -70,7 +70,7 @@ class ProjectsControllerTest < ActionController::TestCase
         Role.find(2).remove_permission! :view_time_entries
         Role.non_member.remove_permission! :view_time_entries
         Role.anonymous.remove_permission! :view_time_entries
-        @request.session[:user_id] = 3
+        sign_in users(:users_003)
       end
       should "not show overall spent time link" do
         get :index
@@ -83,7 +83,7 @@ class ProjectsControllerTest < ActionController::TestCase
   context "#new" do
     context "by admin user" do
       setup do
-        @request.session[:user_id] = 1
+        sign_in users(:users_001)
       end
 
       should "accept get" do
@@ -97,7 +97,7 @@ class ProjectsControllerTest < ActionController::TestCase
     context "by non-admin user with add_project permission" do
       setup do
         Role.non_member.add_permission! :add_project
-        @request.session[:user_id] = 9
+        sign_in users(:users_009)
       end
 
       should "accept get" do
@@ -112,7 +112,7 @@ class ProjectsControllerTest < ActionController::TestCase
       setup do
         Role.find(1).remove_permission! :add_project
         Role.find(1).add_permission! :add_subprojects
-        @request.session[:user_id] = 2
+        sign_in users(:users_002)
       end
 
       should "accept get" do
@@ -133,7 +133,7 @@ class ProjectsControllerTest < ActionController::TestCase
   context "POST :create" do
     context "by admin user" do
       setup do
-        @request.session[:user_id] = 1
+        sign_in users(:users_001)
       end
 
       should "create a new project" do
@@ -191,7 +191,7 @@ class ProjectsControllerTest < ActionController::TestCase
     context "by non-admin user with add_project permission" do
       setup do
         Role.non_member.add_permission! :add_project
-        @request.session[:user_id] = 9
+        sign_in users(:users_009)
       end
 
       should "accept create a Project" do
@@ -239,7 +239,7 @@ class ProjectsControllerTest < ActionController::TestCase
       setup do
         Role.find(1).remove_permission! :add_project
         Role.find(1).add_permission! :add_subprojects
-        @request.session[:user_id] = 2
+        sign_in users(:users_002)
       end
 
       should "create a project with a parent_id" do
@@ -290,7 +290,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
   def test_create_should_preserve_modules_on_validation_failure
     with_settings :default_projects_modules => ['issue_tracking', 'repository'] do
-      @request.session[:user_id] = 1
+      sign_in users(:users_001)
       assert_no_difference 'Project.count' do
         post :create, :project => {
           :name => "blog",
@@ -359,7 +359,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_private_subprojects_visible
-    @request.session[:user_id] = 2 # manager who is a member of the private subproject
+    sign_in users(:users_002) # manager who is a member of the private subproject
     get :show, :id => 'ecookbook'
     assert_response :success
     assert_template 'show'
@@ -367,7 +367,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_settings
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     get :settings, :id => 1
     assert_response :success
     assert_template 'settings'
@@ -375,7 +375,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
   def test_settings_should_be_denied_for_member_on_closed_project
     Project.find(1).close
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
 
     get :settings, :id => 1
     assert_response 403
@@ -389,7 +389,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_update
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     post :update, :id => 1, :project => {:name => 'Test changed name',
                                        :issue_custom_field_ids => ['']}
     assert_redirected_to '/projects/ecookbook/settings'
@@ -398,7 +398,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_update_with_failure
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
     post :update, :id => 1, :project => {:name => ''}
     assert_response :success
     assert_template 'settings'
@@ -407,7 +407,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
   def test_update_should_be_denied_for_member_on_closed_project
     Project.find(1).close
-    @request.session[:user_id] = 2 # manager
+    sign_in users(:users_002) # manager
 
     post :update, :id => 1, :project => {:name => 'Closed'}
     assert_response 403
@@ -423,7 +423,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_modules
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     Project.find(1).enabled_module_names = ['issue_tracking', 'news']
 
     post :modules, :id => 1, :enabled_module_names => ['issue_tracking', 'repository', 'documents']
@@ -432,7 +432,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_destroy_without_confirmation
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     delete :destroy, :id => 1
     assert_response :success
     assert_template 'destroy'
@@ -444,21 +444,21 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     delete :destroy, :id => 1, :confirm => 1
     assert_redirected_to '/admin/projects'
     assert_nil Project.find_by_id(1)
   end
 
   def test_archive
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     post :archive, :id => 1
     assert_redirected_to '/admin/projects'
     assert !Project.find(1).active?
   end
 
   def test_archive_with_failure
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     Project.any_instance.stubs(:archive).returns(false)
     post :archive, :id => 1
     assert_redirected_to '/admin/projects'
@@ -466,7 +466,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_unarchive
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     Project.find(1).archive
     post :unarchive, :id => 1
     assert_redirected_to '/admin/projects'
@@ -474,7 +474,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_close
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :close, :id => 1
     assert_redirected_to '/projects/ecookbook'
     assert_equal Project::STATUS_CLOSED, Project.find(1).status
@@ -482,7 +482,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
   def test_reopen
     Project.find(1).close
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :reopen, :id => 1
     assert_redirected_to '/projects/ecookbook'
     assert Project.find(1).active?
@@ -504,7 +504,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_get_copy
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     get :copy, :id => 1
     assert_response :success
     assert_template 'copy'
@@ -517,13 +517,13 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_get_copy_with_invalid_source_should_respond_with_404
-    @request.session[:user_id] = 1
+    sign_in users(:users_001) # admin
     get :copy, :id => 99
     assert_response 404
   end
 
   def test_post_copy_should_copy_requested_items
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     CustomField.delete_all
 
     assert_difference 'Project.count' do
@@ -546,7 +546,7 @@ class ProjectsControllerTest < ActionController::TestCase
   end
 
   def test_post_copy_should_redirect_to_settings_when_successful
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     post :copy, :id => 1, :project => {:name => 'Copy', :identifier => 'unique-copy'}
     assert_response :redirect
     assert_redirected_to :controller => 'projects', :action => 'settings', :id => 'unique-copy'

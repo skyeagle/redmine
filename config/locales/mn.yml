@@ -246,7 +246,7 @@ mn:
   field_login: Нэвтрэх нэр
   field_mail_notification: Имэйл мэдэгдлүүд
   field_admin: Администратор
-  field_last_login_on: Сүүлийн холбоо
+  field_last_sign_in_at: Сүүлийн холбоо
   field_language: Хэл
   field_effective_date: Огноо
   field_password: Нууц үг

@@ -89,7 +89,7 @@ class Project < ActiveRecord::Base
   scope :status, lambda {|arg| arg.blank? ? {} : {:conditions => {:status => arg.to_i}} }
   scope :all_public, { :conditions => { :is_public => true } }
   scope :visible, lambda {|*args| {:conditions => Project.visible_condition(args.shift || User.current, *args) }}
-  scope :allowed_to, lambda {|*args| 
+  scope :allowed_to, lambda {|*args|
     user = User.current
     permission = nil
     if args.first.is_a?(Symbol)
@@ -138,8 +138,8 @@ class Project < ActiveRecord::Base
   # returns latest created projects
   # non public projects will be returned only if user is a member of those
   def self.latest(user=nil, count=5)
-    visible(user).limit(count).order("created_on DESC").all	
-  end	
+    visible(user).limit(count).order("created_on DESC").all
+  end
 
   # Returns true if the project is visible to +user+ or to the current user.
   def visible?(user=User.current)
@@ -481,7 +481,7 @@ class Project < ActiveRecord::Base
 
   # Returns the mail adresses of users that should be always notified on project events
   def recipients
-    notified_users.collect {|user| user.mail}
+    notified_users.collect {|user| user.email}
   end
 
   # Returns the users that should be notified on project events

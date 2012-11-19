@@ -21,7 +21,7 @@ class CustomFieldsControllerTest < ActionController::TestCase
   fixtures :custom_fields, :custom_values, :trackers, :users
 
   def setup
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
   end
 
   def test_index

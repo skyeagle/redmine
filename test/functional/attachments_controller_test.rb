@@ -25,7 +25,7 @@ class AttachmentsControllerTest < ActionController::TestCase
            :versions, :wiki_pages, :wikis, :documents
 
   def setup
-    User.current = nil
+    sign_out(:user)
     set_fixtures_attachments_directory
   end
 
@@ -95,7 +95,7 @@ class AttachmentsControllerTest < ActionController::TestCase
     user = User.find(1)
     assert_nil user.pref[:diff_type]
 
-    @request.session[:user_id] = 1 # admin
+    sign_in users(:users_001) # admin
     get :show, :id => 5
     assert_response :success
     assert_template 'diff'
@@ -211,12 +211,12 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_show_file_from_private_issue_without_permission
     get :show, :id => 15
-    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2F15'
+    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fattachments%2F15'
     set_tmp_attachments_directory
   end
 
   def test_show_file_from_private_issue_with_permission
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :id => 15
     assert_response :success
     assert_tag 'h2', :content => /private.diff/
@@ -227,7 +227,7 @@ class AttachmentsControllerTest < ActionController::TestCase
     set_tmp_attachments_directory
     attachment = Attachment.create!(:file => uploaded_test_file("testfile.txt", "text/plain"), :author_id => 2)
 
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :id => attachment.id
     assert_response 403
   end
@@ -267,14 +267,14 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_download_should_be_denied_without_permission
     get :download, :id => 7
-    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fdownload%2F7'
+    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fdownload%2F7'
     set_tmp_attachments_directory
   end
 
   if convert_installed?
     def test_thumbnail
       Attachment.clear_thumbnails
-      @request.session[:user_id] = 2
+      sign_in users(:users_002)
 
       get :thumbnail, :id => 16
       assert_response :success
@@ -284,19 +284,19 @@ class AttachmentsControllerTest < ActionController::TestCase
     def test_thumbnail_should_not_exceed_maximum_size
       Redmine::Thumbnail.expects(:generate).with {|source, target, size| size == 800}
 
-      @request.session[:user_id] = 2
+      sign_in users(:users_002)
       get :thumbnail, :id => 16, :size => 2000
     end
 
     def test_thumbnail_should_round_size
       Redmine::Thumbnail.expects(:generate).with {|source, target, size| size == 250}
 
-      @request.session[:user_id] = 2
+      sign_in users(:users_002)
       get :thumbnail, :id => 16, :size => 260
     end
 
     def test_thumbnail_should_return_404_for_non_image_attachment
-      @request.session[:user_id] = 2
+      sign_in users(:users_002)
 
       get :thumbnail, :id => 15
       assert_response 404
@@ -304,7 +304,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
     def test_thumbnail_should_return_404_if_thumbnail_generation_failed
       Attachment.any_instance.stubs(:thumbnail).returns(nil)
-      @request.session[:user_id] = 2
+      sign_in users(:users_002)
 
       get :thumbnail, :id => 16
       assert_response 404
@@ -312,7 +312,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
     def test_thumbnail_should_be_denied_without_permission
       get :thumbnail, :id => 16
-      assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fthumbnail%2F16'
+      assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fthumbnail%2F16'
     end
   else
     puts '(ImageMagick convert not available)'
@@ -321,7 +321,7 @@ class AttachmentsControllerTest < ActionController::TestCase
   def test_destroy_issue_attachment
     set_tmp_attachments_directory
     issue = Issue.find(3)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_difference 'issue.attachments.count', -1 do
       assert_difference 'Journal.count' do
@@ -340,7 +340,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_destroy_wiki_page_attachment
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Attachment.count', -1 do
       delete :destroy, :id => 3
       assert_response 302
@@ -349,7 +349,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_destroy_project_attachment
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Attachment.count', -1 do
       delete :destroy, :id => 8
       assert_response 302
@@ -358,7 +358,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_destroy_version_attachment
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Attachment.count', -1 do
       delete :destroy, :id => 9
       assert_response 302

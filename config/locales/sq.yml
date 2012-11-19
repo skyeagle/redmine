@@ -261,7 +261,7 @@ sq:
   field_login: Login
   field_mail_notification: Njoftim me Email
   field_admin: Administratori
-  field_last_login_on: Lidhja e Fundit
+  field_last_sign_in_at: Lidhja e Fundit
   field_language: Gjuha
   field_effective_date: Data
   field_password: Fjalekalimi

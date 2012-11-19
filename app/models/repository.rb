@@ -310,7 +310,7 @@ class Repository < ActiveRecord::Base
       elsif committer.strip =~ /^([^<]+)(<(.*)>)?$/
         username, email = $1.strip, $3
         u = User.find_by_login(username)
-        u ||= User.find_by_mail(email) unless email.blank?
+        u ||= User.find_by_email(email) unless email.blank?
         user = u
       end
       @found_committer_users[committer] = user

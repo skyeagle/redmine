@@ -27,7 +27,12 @@ class Group < Principal
   validates_uniqueness_of :lastname, :case_sensitive => false
   validates_length_of :lastname, :maximum => 30
 
+  after_initialize :defaults
   before_destroy :remove_references_before_destroy
+
+  def defaults
+    self.status = '1'
+  end
 
   scope :sorted, order("#{table_name}.lastname ASC")
 

@@ -1,0 +1,49 @@
+<%= call_hook :view_account_login_top %>
+<div id="login-form">
+<%= form_for(resource, :as => resource_name, :url => session_path(resource_name)) do |f| %>
+<%= back_url_hidden_field_tag %>
+
+<table>
+<tr>
+  <td align="right"><%= f.label :login, l(:field_login_or_email)%>:</td>
+    <td align="left"><%= f.text_field :login %></td>
+</tr>
+<tr>
+    <td align="right"><%= f.label :password %>:</td>
+    <td align="left"><%= f.password_field :password %></td>
+</tr>
+<% if Setting.openid? %>
+<tr>
+  <td align="right"><%= f.label :identity_url, l(:field_identity_url) -%></label></td>
+  <td align="left"><%= f.text_field :identity_url, :tabindex => '3' %></td>
+</tr>
+<% end %>
+<tr>
+    <td></td>
+    <td align="left">
+        <% if Setting.autologin? %>
+          <%= f.check_box :remember_me %><%= f.label l(:label_stay_logged_in) %>
+        <% end %>
+    </td>
+</tr>
+<tr>
+    <td align="left">
+        <%- if Setting.lost_password? && devise_mapping.recoverable? && controller_name != 'passwords' %>
+          <%= link_to l(:label_password_lost), new_password_path(resource_name) %><br />
+        <% end -%>
+    </td>
+    <td align="right">
+        <input type="submit" name="login" value="<%=l(:button_login)%> &#187;" tabindex="5"/>
+    </td>
+</tr>
+</table>
+<% end %>
+
+</div>
+<%= call_hook :view_account_login_bottom %>
+
+<% if params[:username].present? %>
+<%= javascript_tag "$('#password').focus();" %>
+<% else %>
+<%= javascript_tag "$('#username').focus();" %>
+<% end %>

@@ -260,7 +260,7 @@ en-GB:
   field_login: Login
   field_mail_notification: Email notifications
   field_admin: Administrator
-  field_last_login_on: Last connection
+  field_last_sign_in_at: Last connection
   field_language: Language
   field_effective_date: Date
   field_password: Password

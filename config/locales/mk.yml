@@ -254,7 +254,7 @@ mk:
   field_login: Корисник
   field_mail_notification: Известувања по e-пошта
   field_admin: Администратор
-  field_last_login_on: Последна најава
+  field_last_sign_in_at: Последна најава
   field_language: Јазик
   field_effective_date: Дата
   field_password: Лозинка

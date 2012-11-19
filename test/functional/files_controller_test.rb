@@ -31,7 +31,7 @@ class FilesControllerTest < ActionController::TestCase
            :versions
 
   def setup
-    @request.session[:user_id] = nil
+    sign_out(:user)
     Setting.default_language = 'en'
   end
 
@@ -51,7 +51,7 @@ class FilesControllerTest < ActionController::TestCase
   end
 
   def test_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => 1
     assert_response :success
     assert_template 'new'
@@ -61,7 +61,7 @@ class FilesControllerTest < ActionController::TestCase
 
   def test_new_without_versions
     Version.delete_all
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :project_id => 1
     assert_response :success
     assert_template 'new'
@@ -71,7 +71,7 @@ class FilesControllerTest < ActionController::TestCase
 
   def test_create_file
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     ActionMailer::Base.deliveries.clear
 
     with_settings :notified_events => %w(file_added) do
@@ -94,7 +94,7 @@ class FilesControllerTest < ActionController::TestCase
 
   def test_create_version_file
     set_tmp_attachments_directory
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
 
     assert_difference 'Attachment.count' do
       post :create, :project_id => 1, :version_id => '2',

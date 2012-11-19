@@ -83,7 +83,7 @@ class Mailer < ActionMailer::Base
     @issues_url = url_for(:controller => 'issues', :action => 'index',
                                 :set_filter => 1, :assigned_to_id => user.id,
                                 :sort => 'due_date:asc')
-    mail :to => user.mail,
+    mail :to => user.email,
       :subject => l(:mail_subject_reminder, :count => issues.size, :days => days)
   end
 
@@ -115,11 +115,11 @@ class Mailer < ActionMailer::Base
     when 'Project'
       added_to_url = url_for(:controller => 'files', :action => 'index', :project_id => container)
       added_to = "#{l(:label_project)}: #{container}"
-      recipients = container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.mail}
+      recipients = container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.email}
     when 'Version'
       added_to_url = url_for(:controller => 'files', :action => 'index', :project_id => container.project)
       added_to = "#{l(:label_version)}: #{container.name}"
-      recipients = container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.mail}
+      recipients = container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.email}
     when 'Document'
       added_to_url = url_for(:controller => 'documents', :action => 'show', :id => container.id)
       added_to = "#{l(:label_document)}: #{container.title}"
@@ -240,8 +240,8 @@ class Mailer < ActionMailer::Base
     set_language_if_valid user.language
     @user = user
     @password = password
-    @login_url = url_for(:controller => 'account', :action => 'login')
-    mail :to => user.mail,
+    @login_url = new_user_session_url
+    mail :to => user.email,
       :subject => l(:mail_subject_register, Setting.app_title)
   end
 
@@ -252,7 +252,7 @@ class Mailer < ActionMailer::Base
   #   Mailer.account_activation_request(user).deliver => sends an email to all active administrators
   def account_activation_request(user)
     # Send the email to all active administrators
-    recipients = User.active.where(:admin => true).all.collect { |u| u.mail }.compact
+    recipients = User.active.where(:admin => true).all.collect { |u| u.email }.compact
     @user = user
     @url = url_for(:controller => 'users', :action => 'index',
                          :status => User::STATUS_REGISTERED,
@@ -269,8 +269,8 @@ class Mailer < ActionMailer::Base
   def account_activated(user)
     set_language_if_valid user.language
     @user = user
-    @login_url = url_for(:controller => 'account', :action => 'login')
-    mail :to => user.mail,
+    @login_url = url_for(:controller => 'users/sessions', :action => 'new')
+    mail :to => user.email,
       :subject => l(:mail_subject_register, Setting.app_title)
   end
 
@@ -278,7 +278,7 @@ class Mailer < ActionMailer::Base
     set_language_if_valid(token.user.language)
     @token = token
     @url = url_for(:controller => 'account', :action => 'lost_password', :token => token.value)
-    mail :to => token.user.mail,
+    mail :to => token.user.email,
       :subject => l(:mail_subject_lost_password, Setting.app_title)
   end
 
@@ -286,14 +286,14 @@ class Mailer < ActionMailer::Base
     set_language_if_valid(token.user.language)
     @token = token
     @url = url_for(:controller => 'account', :action => 'activate', :token => token.value)
-    mail :to => token.user.mail,
+    mail :to => token.user.email,
       :subject => l(:mail_subject_register, Setting.app_title)
   end
 
   def test_email(user)
     set_language_if_valid(user.language)
     @url = url_for(:controller => 'welcome')
-    mail :to => user.mail,
+    mail :to => user.email,
       :subject => 'Redmine test'
   end
 
@@ -391,8 +391,8 @@ class Mailer < ActionMailer::Base
     # Removes the author from the recipients and cc
     # if he doesn't want to receive notifications about what he does
     if @author && @author.logged? && @author.pref[:no_self_notified]
-      headers[:to].delete(@author.mail) if headers[:to].is_a?(Array)
-      headers[:cc].delete(@author.mail) if headers[:cc].is_a?(Array)
+      headers[:to].delete(@author.email) if headers[:to].is_a?(Array)
+      headers[:cc].delete(@author.email) if headers[:cc].is_a?(Array)
     end
 
     if @author && @author.logged?
@@ -426,7 +426,7 @@ class Mailer < ActionMailer::Base
     set_language_if_valid Setting.default_language
     super
   end
-  
+
   def self.deliver_mail(mail)
     return false if mail.to.blank? && mail.cc.blank? && mail.bcc.blank?
     super

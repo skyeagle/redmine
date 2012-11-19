@@ -243,7 +243,7 @@ da:
   field_login: Login
   field_mail_notification: Email-påmindelser
   field_admin: Administrator
-  field_last_login_on: Sidste forbindelse
+  field_last_sign_in_at: Sidste forbindelse
   field_language: Sprog
   field_effective_date: Dato
   field_password: Kodeord

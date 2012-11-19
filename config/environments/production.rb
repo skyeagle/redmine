@@ -29,4 +29,6 @@ RedmineApp::Application.configure do
   config.action_mailer.logger = nil
 
   config.active_support.deprecation = :log
+
+  config.threadsafe!
 end

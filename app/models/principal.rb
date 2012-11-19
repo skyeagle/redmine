@@ -32,7 +32,7 @@ class Principal < ActiveRecord::Base
       where({})
     else
       pattern = "%#{q}%"
-      sql = %w(login firstname lastname mail).map {|column| "LOWER(#{table_name}.#{column}) LIKE LOWER(:p)"}.join(" OR ")
+      sql = %w(login firstname lastname email).map {|column| "LOWER(#{table_name}.#{column}) LIKE LOWER(:p)"}.join(" OR ")
       params = {:p => pattern}
       if q =~ /^(.+)\s+(.+)$/
         a, b = "#{$1}%", "#{$2}%"
@@ -87,10 +87,10 @@ class Principal < ActiveRecord::Base
   # Make sure we don't try to insert NULL values (see #4632)
   def set_default_empty_values
     self.login ||= ''
-    self.hashed_password ||= ''
+    #self.hashed_password ||= ''
     self.firstname ||= ''
     self.lastname ||= ''
-    self.mail ||= ''
+    self.email ||= ''
     true
   end
 end

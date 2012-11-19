@@ -258,7 +258,7 @@ ar:
   field_login: تسجيل الدخول
   field_mail_notification: ملاحظات على البريد الالكتروني
   field_admin: المدير
-  field_last_login_on: اخر اتصال
+  field_last_sign_in_at: اخر اتصال
   field_language: لغة
   field_effective_date: تاريخ
   field_password: كلمة المرور

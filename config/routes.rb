@@ -15,14 +15,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+require 'project'
+require 'principal'
+
 RedmineApp::Application.routes.draw do
+
   root :to => 'welcome#index', :as => 'home'
 
-  match 'login', :to => 'account#login', :as => 'signin'
-  match 'logout', :to => 'account#logout', :as => 'signout'
-  match 'account/register', :to => 'account#register', :via => [:get, :post], :as => 'register'
-  match 'account/lost_password', :to => 'account#lost_password', :via => [:get, :post], :as => 'lost_password'
-  match 'account/activate', :to => 'account#activate', :via => :get
+  devise_for :users, :controllers => {
+    :confirmations => 'users/confirmations',
+    :sessions => 'users/sessions',
+    :registrations => 'users/registrations',
+    :passwords => 'users/passwords',
+    :omniauth_callbacks => 'users/omniauth_callbacks'
+  }, :path_names => { :registration => 'register' }
 
   match '/news/preview', :controller => 'previews', :action => 'news', :as => 'preview_news'
   match '/issues/preview/new/:project_id', :to => 'previews#issue', :as => 'preview_new_issue'
@@ -61,12 +67,10 @@ RedmineApp::Application.routes.draw do
   match 'projects/:id/issues/report/:detail', :to => 'reports#issue_report_details', :via => :get
 
   match 'my/account', :controller => 'my', :action => 'account', :via => [:get, :post]
-  match 'my/account/destroy', :controller => 'my', :action => 'destroy', :via => [:get, :post]
-  match 'my/page', :controller => 'my', :action => 'page', :via => :get
+  match 'my/page', :controller => 'my', :action => 'page', :via => :get, :as => :user_root
   match 'my', :controller => 'my', :action => 'index', :via => :get # Redirects to my/page
   match 'my/reset_rss_key', :controller => 'my', :action => 'reset_rss_key', :via => :post
   match 'my/reset_api_key', :controller => 'my', :action => 'reset_api_key', :via => :post
-  match 'my/password', :controller => 'my', :action => 'password', :via => [:get, :post]
   match 'my/page_layout', :controller => 'my', :action => 'page_layout', :via => :get
   match 'my/add_block', :controller => 'my', :action => 'add_block', :via => :post
   match 'my/remove_block', :controller => 'my', :action => 'remove_block', :via => :post

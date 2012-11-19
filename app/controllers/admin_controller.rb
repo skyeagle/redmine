@@ -23,12 +23,12 @@ class AdminController < ApplicationController
 
   before_filter :require_admin
   helper :sort
-  include SortHelper	
+  include SortHelper
 
   def index
     @no_configuration_data = Redmine::DefaultData::Loader::no_data?
   end
-	
+
   def projects
     @status = params[:status] || 1
 
@@ -63,7 +63,7 @@ class AdminController < ApplicationController
     ActionMailer::Base.raise_delivery_errors = true
     begin
       @test = Mailer.test_email(User.current).deliver
-      flash[:notice] = l(:notice_email_sent, User.current.mail)
+      flash[:notice] = l(:notice_email_sent, User.current.email)
     rescue Exception => e
       flash[:error] = l(:notice_email_error, e.message)
     end

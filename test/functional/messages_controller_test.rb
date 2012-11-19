@@ -21,7 +21,7 @@ class MessagesControllerTest < ActionController::TestCase
   fixtures :projects, :users, :members, :member_roles, :roles, :boards, :messages, :enabled_modules
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_show
@@ -32,9 +32,9 @@ class MessagesControllerTest < ActionController::TestCase
     assert_not_nil assigns(:project)
     assert_not_nil assigns(:topic)
   end
-  
+
   def test_show_should_contain_reply_field_tags_for_quoting
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :board_id => 1, :id => 1
     assert_response :success
 
@@ -61,7 +61,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_show_with_reply_permission
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :board_id => 1, :id => 1
     assert_response :success
     assert_template 'show'
@@ -75,14 +75,14 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_get_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :new, :board_id => 1
     assert_response :success
     assert_template 'new'
   end
 
   def test_post_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     ActionMailer::Base.deliveries.clear
 
     with_settings :notified_events => %w(message_posted) do
@@ -108,14 +108,14 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_get_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :edit, :board_id => 1, :id => 1
     assert_response :success
     assert_template 'edit'
   end
 
   def test_post_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :edit, :board_id => 1, :id => 1,
                 :message => { :subject => 'New subject',
                               :content => 'New body'}
@@ -126,7 +126,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_post_edit_sticky_and_locked
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :edit, :board_id => 1, :id => 1,
                 :message => { :subject => 'New subject',
                               :content => 'New body',
@@ -139,7 +139,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_post_edit_should_allow_to_change_board
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :edit, :board_id => 1, :id => 1,
                 :message => { :subject => 'New subject',
                               :content => 'New body',
@@ -150,7 +150,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_reply
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :reply, :board_id => 1, :id => 1, :reply => { :content => 'This is a test reply', :subject => 'Test reply' }
     reply = Message.order('id DESC').first
     assert_redirected_to "/boards/1/topics/1?r=#{reply.id}"
@@ -158,7 +158,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_destroy_topic
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Message.count', -3 do
       post :destroy, :board_id => 1, :id => 1
     end
@@ -167,7 +167,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_destroy_reply
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Message.count', -1 do
       post :destroy, :board_id => 1, :id => 2
     end
@@ -176,7 +176,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_quote
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     xhr :get, :quote, :board_id => 1, :id => 3
     assert_response :success
     assert_equal 'text/javascript', response.content_type
@@ -186,7 +186,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_preview_new
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :preview,
       :board_id => 1,
       :message => {:subject => "", :content => "Previewed text"}
@@ -195,7 +195,7 @@ class MessagesControllerTest < ActionController::TestCase
   end
 
   def test_preview_edit
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :preview,
       :id => 4,
       :board_id => 1,

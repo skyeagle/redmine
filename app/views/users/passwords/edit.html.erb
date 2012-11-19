@@ -1,0 +1,22 @@
+<h2><%=l(:label_password_lost)%></h2>
+
+<%= form_for(resource, :as => resource_name, :url => password_path(resource_name), :html => { :method => :put }) do |f| %>
+  <%= error_messages_for resource %>
+  <%= f.hidden_field :reset_password_token %>
+
+  <div class="box tabular">
+    <p>
+    <%= f.label :password, l(:field_new_password) %><span class="required">*</span>
+    <%= f.password_field :password, :autofocus => true, :size => 25  %>
+      <em class="info"><%= l(:text_caracters_minimum, :count => Setting.password_min_length) %></em>
+    </p>
+
+    <p>
+    <%= f.label :password_confirmation, l(:field_password_confirmation) %><span class="required">*</span>
+    <%= f.password_field :password_confirmation, :size => 25  %>
+    </p>
+
+  </div>
+  <p><%= f.submit l(:button_save) %></p>
+
+<% end %>

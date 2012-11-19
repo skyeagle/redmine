@@ -21,11 +21,11 @@ class CommentsControllerTest < ActionController::TestCase
   fixtures :projects, :users, :roles, :members, :member_roles, :enabled_modules, :news, :comments
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_add_comment
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     post :create, :id => 1, :comment => { :comments => 'This is a test comment' }
     assert_redirected_to '/news/1'
 
@@ -36,7 +36,7 @@ class CommentsControllerTest < ActionController::TestCase
   end
 
   def test_empty_comment_should_not_be_added
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Comment.count' do
       post :create, :id => 1, :comment => { :comments => '' }
       assert_response :redirect
@@ -46,7 +46,7 @@ class CommentsControllerTest < ActionController::TestCase
 
   def test_create_should_be_denied_if_news_is_not_commentable
     News.any_instance.stubs(:commentable?).returns(false)
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Comment.count' do
       post :create, :id => 1, :comment => { :comments => 'This is a test comment' }
       assert_response 403
@@ -55,7 +55,7 @@ class CommentsControllerTest < ActionController::TestCase
 
   def test_destroy_comment
     comments_count = News.find(1).comments.size
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     delete :destroy, :id => 1, :comment_id => 2
     assert_redirected_to '/news/1'
     assert_nil Comment.find_by_id(2)

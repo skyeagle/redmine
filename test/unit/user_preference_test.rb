@@ -21,8 +21,9 @@ class UserPreferenceTest < ActiveSupport::TestCase
   fixtures :users, :user_preferences
 
   def test_create
-    user = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
-    user.login = "newuser"
+    user = User.generate do |u|
+      u.login = "newuser"
+    end
     user.password, user.password_confirmation = "password", "password"
     assert user.save
 
@@ -42,8 +43,9 @@ class UserPreferenceTest < ActiveSupport::TestCase
   end
 
   def test_others_hash
-    user = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
-    user.login = "newuser"
+    user = User.generate do |u|
+      u.login = "newuser"
+    end
     user.password, user.password_confirmation = "password", "password"
     assert user.save
     assert_nil user.preference

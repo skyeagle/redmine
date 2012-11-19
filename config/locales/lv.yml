@@ -240,7 +240,7 @@ lv:
   field_login: Pieslēgties
   field_mail_notification: "E-pasta paziņojumi"
   field_admin: Administrators
-  field_last_login_on: Pēdējo reizi pieslēdzies
+  field_last_sign_in_at: Pēdējo reizi pieslēdzies
   field_language: Valoda
   field_effective_date: Datums
   field_password: Parole

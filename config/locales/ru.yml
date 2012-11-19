@@ -344,7 +344,7 @@ ru:
   field_issue_to: Связанные задачи
   field_issue: Задача
   field_language: Язык
-  field_last_login_on: Последнее подключение
+  field_last_sign_in_at: Последнее подключение
   field_lastname: Фамилия
   field_login: Пользователь
   field_mail: Email

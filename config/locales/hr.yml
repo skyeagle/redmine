@@ -241,7 +241,7 @@ hr:
   field_login: Korisničko ime
   field_mail_notification: Obavijest putem e-pošte
   field_admin: Administrator
-  field_last_login_on: Zadnja prijava
+  field_last_sign_in_at: Zadnja prijava
   field_language: Primarni jezik
   field_effective_date: Datum
   field_password: Zaporka

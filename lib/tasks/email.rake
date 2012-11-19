@@ -179,7 +179,7 @@ END_DESC
         Mailer.with_synched_deliveries do
           Mailer.test_email(user).deliver
         end
-        puts l(:notice_email_sent, user.mail)
+        puts l(:notice_email_sent, user.email)
       rescue Exception => e
         abort l(:notice_email_error, e.message)
       end

@@ -21,11 +21,11 @@ class WikisControllerTest < ActionController::TestCase
   fixtures :projects, :users, :roles, :members, :member_roles, :enabled_modules, :wikis
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_create
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     assert_nil Project.find(3).wiki
 
     assert_difference 'Wiki.count' do
@@ -41,7 +41,7 @@ class WikisControllerTest < ActionController::TestCase
   end
 
   def test_create_with_failure
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
 
     assert_no_difference 'Wiki.count' do
       xhr :post, :edit, :id => 3, :wiki => { :start_page => '' }
@@ -55,7 +55,7 @@ class WikisControllerTest < ActionController::TestCase
   end
 
   def test_update
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
 
     assert_no_difference 'Wiki.count' do
       xhr :post, :edit, :id => 1, :wiki => { :start_page => 'Other start page' }
@@ -69,14 +69,14 @@ class WikisControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     post :destroy, :id => 1, :confirm => 1
     assert_redirected_to :controller => 'projects', :action => 'settings', :id => 'ecookbook', :tab => 'wiki'
     assert_nil Project.find(1).wiki
   end
 
   def test_not_found
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     post :destroy, :id => 999, :confirm => 1
     assert_response 404
   end

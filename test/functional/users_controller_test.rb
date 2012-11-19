@@ -21,12 +21,11 @@ class UsersControllerTest < ActionController::TestCase
   include Redmine::I18n
 
   fixtures :users, :projects, :members, :member_roles, :roles,
-           :custom_fields, :custom_values, :groups_users,
-           :auth_sources
+           :custom_fields, :custom_values, :groups_users
 
   def setup
-    User.current = nil
-    @request.session[:user_id] = 1 # admin
+    sign_out(:user)
+    sign_in users(:users_001) # admin
   end
 
   def test_index
@@ -75,7 +74,7 @@ class UsersControllerTest < ActionController::TestCase
   end
 
   def test_show
-    @request.session[:user_id] = nil
+    sign_out(:user)
     get :show, :id => 2
     assert_response :success
     assert_template 'show'
@@ -85,7 +84,7 @@ class UsersControllerTest < ActionController::TestCase
   end
 
   def test_show_should_not_display_hidden_custom_fields
-    @request.session[:user_id] = nil
+    sign_out(:user)
     UserCustomField.find_by_name('Phone number').update_attribute :visible, false
     get :show, :id => 2
     assert_response :success
@@ -107,26 +106,26 @@ class UsersControllerTest < ActionController::TestCase
   end
 
   def test_show_inactive
-    @request.session[:user_id] = nil
+    sign_out(:user)
     get :show, :id => 5
     assert_response 404
   end
 
   def test_show_should_not_reveal_users_with_no_visible_activity_or_project
-    @request.session[:user_id] = nil
+    sign_out(:user)
     get :show, :id => 9
     assert_response 404
   end
 
   def test_show_inactive_by_admin
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :show, :id => 5
     assert_response 200
     assert_not_nil assigns(:user)
   end
 
   def test_show_displays_memberships_based_on_project_visibility
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :show, :id => 2
     assert_response :success
     memberships = assigns(:memberships)
@@ -136,13 +135,13 @@ class UsersControllerTest < ActionController::TestCase
   end
 
   def test_show_current_should_require_authentication
-    @request.session[:user_id] = nil
+    sign_out(:user)
     get :show, :id => 'current'
     assert_response 302
   end
 
   def test_show_current
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     get :show, :id => 'current'
     assert_response :success
     assert_template 'show'
@@ -168,7 +167,7 @@ class UsersControllerTest < ActionController::TestCase
             :login => 'jdoe',
             :password => 'secret123',
             :password_confirmation => 'secret123',
-            :mail => 'jdoe@gmail.com',
+            :email => 'jdoe@gmail.com',
             :mail_notification => 'none'
           },
           :send_information => '1'
@@ -181,13 +180,13 @@ class UsersControllerTest < ActionController::TestCase
     assert_equal 'John', user.firstname
     assert_equal 'Doe', user.lastname
     assert_equal 'jdoe', user.login
-    assert_equal 'jdoe@gmail.com', user.mail
+    assert_equal 'jdoe@gmail.com', user.email
     assert_equal 'none', user.mail_notification
-    assert user.check_password?('secret123')
+    assert user.valid_password?('secret123')
 
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal [user.mail], mail.bcc
+    assert_equal [user.email], mail.bcc
     assert_mail_body_match 'secret', mail
   end
 
@@ -200,7 +199,7 @@ class UsersControllerTest < ActionController::TestCase
           :login => 'jdoe',
           :password => 'secret123',
           :password_confirmation => 'secret123',
-          :mail => 'jdoe@gmail.com',
+          :email => 'jdoe@gmail.com',
           :mail_notification => 'none'
         },
         :pref => {
@@ -261,7 +260,8 @@ class UsersControllerTest < ActionController::TestCase
   end
 
   def test_update_with_activation_should_send_a_notification
-    u = User.new(:firstname => 'Foo', :lastname => 'Bar', :mail => 'foo.bar@somenet.foo', :language => 'fr')
+    u = User.new(:firstname => 'Foo', :lastname => 'Bar', :email => 'foo.bar@somenet.foo', :language => 'fr')
+    u.password = u.password_confirmation = Devise.friendly_token[0,20]
     u.login = 'foo'
     u.status = User::STATUS_REGISTERED
     u.save!
@@ -282,24 +282,12 @@ class UsersControllerTest < ActionController::TestCase
 
     put :update, :id => 2, :user => {:password => 'newpass123', :password_confirmation => 'newpass123'}, :send_information => '1'
     u = User.find(2)
-    assert u.check_password?('newpass123')
+    assert u.valid_password?('newpass123')
 
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal [u.mail], mail.bcc
+    assert_equal [u.email], mail.bcc
     assert_mail_body_match 'newpass123', mail
-  end
-
-  def test_update_user_switchin_from_auth_source_to_password_authentication
-    # Configure as auth source
-    u = User.find(2)
-    u.auth_source = AuthSource.find(1)
-    u.save!
-
-    put :update, :id => u.id, :user => {:auth_source_id => '', :password => 'newpass123', :password_confirmation => 'newpass123'}
-
-    assert_equal nil, u.reload.auth_source
-    assert u.check_password?('newpass123')
   end
 
   def test_update_notified_project
@@ -334,7 +322,7 @@ class UsersControllerTest < ActionController::TestCase
   end
 
   def test_destroy_should_be_denied_for_non_admin_users
-    @request.session[:user_id] = 3
+    sign_in users(:users_003)
 
     assert_no_difference 'User.count' do
       get :destroy, :id => 2

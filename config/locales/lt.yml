@@ -315,7 +315,7 @@ lt:
   field_login: Registracijos vardas
   field_mail_notification: Elektroninio pašto pranešimai
   field_admin: Administratorius
-  field_last_login_on: Paskutinis prisijungimas
+  field_last_sign_in_at: Paskutinis prisijungimas
   field_language: Kalba
   field_effective_date: Data
   field_password: Slaptažodis

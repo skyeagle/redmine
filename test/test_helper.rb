@@ -19,14 +19,14 @@
 ENV["RAILS_ENV"] = "test"
 require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
 require 'rails/test_help'
-require Rails.root.join('test', 'mocks', 'open_id_authentication_mock.rb').to_s
+require Rails.root.join('test', 'mocks', 'open_id_authentication.rb').to_s
 
 require File.expand_path(File.dirname(__FILE__) + '/object_helpers')
 include ObjectHelpers
 
 class ActiveSupport::TestCase
   include ActionDispatch::TestProcess
-  
+
   # Transactional fixtures accelerate your tests by wrapping each test method
   # in a transaction that's rolled back on completion.  This ensures that the
   # test database remains unchanged so your fixtures don't have to be reloaded
@@ -52,12 +52,19 @@ class ActiveSupport::TestCase
 
   def log_user(login, password)
     User.anonymous
-    get "/login"
-    assert_equal nil, session[:user_id]
+    get user_session_path
     assert_response :success
-    assert_template "account/login"
-    post "/login", :username => login, :password => password
-    assert_equal login, User.find(session[:user_id]).login
+    post user_session_path, :user => { :login => login, :password => password }
+  end
+
+  def generate_signed_cookie(raw_cookie)
+    request = ActionDispatch::TestRequest.new
+    request.cookie_jar.signed['raw_cookie'] = raw_cookie
+    request.cookie_jar['raw_cookie']
+  end
+
+  def signed_cookie(key)
+    controller.send(:cookies).signed[key]
   end
 
   def uploaded_test_file(name, mime)
@@ -112,6 +119,32 @@ class ActiveSupport::TestCase
     yield
   ensure
     saved_settings.each {|k, v| Setting[k] = v} if saved_settings
+  end
+
+  # Stolen from Devise
+  # Execute the block setting the given values and restoring old values after
+  # the block is executed.
+  def swap(object, new_values)
+    old_values = {}
+    new_values.each do |key, value|
+      old_values[key] = object.send key
+      object.send :"#{key}=", value
+    end
+    clear_cached_variables(new_values)
+    yield
+  ensure
+    clear_cached_variables(new_values)
+    old_values.each do |key, value|
+      object.send :"#{key}=", value
+    end
+  end
+
+  def clear_cached_variables(options)
+    if options.key?(:case_insensitive_keys) || options.key?(:strip_whitespace_keys)
+      Devise.mappings.each do |_, mapping|
+        mapping.to.instance_variable_set(:@devise_param_filter, nil)
+      end
+    end
   end
 
   # Yields the block with user as the current user
@@ -273,8 +306,8 @@ class ActiveSupport::TestCase
         setup do
           @user = User.generate! do |user|
             user.admin = true
-            user.password = 'my_password'
           end
+          @user.reset_password! 'my_password', 'my_password'
           send(http_method, url, parameters, credentials(@user.login, 'my_password'))
         end
 
@@ -373,6 +406,7 @@ class ActiveSupport::TestCase
         setup do
           @user = User.generate! do |user|
             user.admin = true
+            user.skip_confirmation!
           end
           @token = Token.create!(:user => @user, :action => 'api')
           # Simple url parse to add on ?key= or &key=
@@ -395,6 +429,7 @@ class ActiveSupport::TestCase
         setup do
           @user = User.generate! do |user|
             user.admin = true
+            user.skip_confirmation!
           end
           @token = Token.create!(:user => @user, :action => 'feeds')
           # Simple url parse to add on ?key= or &key=
@@ -417,6 +452,7 @@ class ActiveSupport::TestCase
       setup do
         @user = User.generate! do |user|
           user.admin = true
+          user.skip_confirmation!
         end
         @token = Token.create!(:user => @user, :action => 'api')
         send(http_method, url, parameters, {'X-Redmine-API-Key' => @token.value.to_s})
@@ -487,6 +523,10 @@ class ActiveSupport::TestCase
       assert_response status
     end
   end
+end
+
+class ActionController::TestCase
+  include Devise::TestHelpers
 end
 
 # Simple module to "namespace" all of the API tests

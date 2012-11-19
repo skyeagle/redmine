@@ -42,7 +42,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
       context "with include=memberships" do
         should "include memberships" do
           get '/users/2.xml?include=memberships'
-  
+
           assert_response :success
           assert_tag :tag => 'memberships',
             :parent => {:tag => 'user'},
@@ -65,7 +65,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
       context "with include=memberships" do
         should "include memberships" do
           get '/users/2.json?include=memberships'
-  
+
           assert_response :success
           json = ActiveSupport::JSON.decode(response.body)
           assert_kind_of Array, json['user']['memberships']
@@ -102,7 +102,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
         @parameters = {
           :user => {
              :login => 'foo', :firstname => 'Firstname', :lastname => 'Lastname',
-             :mail => 'foo@example.net', :password => 'secret123',
+             :email => 'foo@example.net', :password => 'secret123',
              :mail_notification => 'only_assigned'
           }
         }
@@ -113,7 +113,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
           '/users.xml',
            {:user => {
               :login => 'foo', :firstname => 'Firstname', :lastname => 'Lastname',
-              :mail => 'foo@example.net', :password => 'secret123'
+              :email => 'foo@example.net', :password => 'secret123'
             }},
           {:success_code => :created})
 
@@ -126,10 +126,10 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
           assert_equal 'foo', user.login
           assert_equal 'Firstname', user.firstname
           assert_equal 'Lastname', user.lastname
-          assert_equal 'foo@example.net', user.mail
+          assert_equal 'foo@example.net', user.email
           assert_equal 'only_assigned', user.mail_notification
           assert !user.admin?
-          assert user.check_password?('secret123')
+          assert user.valid_password?('secret123')
 
           assert_response :created
           assert_equal 'application/xml', @response.content_type
@@ -142,7 +142,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
           '/users.json',
           {:user => {
              :login => 'foo', :firstname => 'Firstname', :lastname => 'Lastname',
-             :mail => 'foo@example.net'
+             :email => 'foo@example.net', :password => 'secret123', :password_confirmation => 'secret123'
           }},
           {:success_code => :created})
 
@@ -155,7 +155,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
           assert_equal 'foo', user.login
           assert_equal 'Firstname', user.firstname
           assert_equal 'Lastname', user.lastname
-          assert_equal 'foo@example.net', user.mail
+          assert_equal 'foo@example.net', user.email
           assert !user.admin?
 
           assert_response :created
@@ -234,7 +234,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
           assert_equal 'jsmith', user.login
           assert_equal 'John', user.firstname
           assert_equal 'Renamed', user.lastname
-          assert_equal 'jsmith@somenet.foo', user.mail
+          assert_equal 'jsmith@somenet.foo', user.email
           assert !user.admin?
 
           assert_response :ok
@@ -260,7 +260,7 @@ class ApiTest::UsersTest < ActionController::IntegrationTest
           assert_equal 'jsmith', user.login
           assert_equal 'John', user.firstname
           assert_equal 'Renamed', user.lastname
-          assert_equal 'jsmith@somenet.foo', user.mail
+          assert_equal 'jsmith@somenet.foo', user.email
           assert !user.admin?
 
           assert_response :ok
