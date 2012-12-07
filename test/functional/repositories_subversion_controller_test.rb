@@ -29,7 +29,7 @@ class RepositoriesSubversionControllerTest < ActionController::TestCase
 
   def setup
     Setting.default_language = 'en'
-    User.current = nil
+    sign_out(:user)
 
     @project = Project.find(PRJ_ID)
     @repository = Repository::Subversion.create(:project => @project,
@@ -39,7 +39,7 @@ class RepositoriesSubversionControllerTest < ActionController::TestCase
 
   if repository_configured?('subversion')
     def test_new
-      @request.session[:user_id] = 1
+      sign_in users(:users_001)
       @project.repository.destroy
       get :new, :project_id => 'subproject1', :repository_scm => 'Subversion'
       assert_response :success
@@ -389,7 +389,7 @@ class RepositoriesSubversionControllerTest < ActionController::TestCase
     end
 
     def test_destroy_valid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       assert_equal 0, @repository.changesets.count
       @repository.fetch_changesets
       assert_equal NUM_REV, @repository.changesets.count
@@ -403,7 +403,7 @@ class RepositoriesSubversionControllerTest < ActionController::TestCase
     end
 
     def test_destroy_invalid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       @project.repository.destroy
       @repository = Repository::Subversion.create!(
                        :project => @project,

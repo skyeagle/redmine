@@ -27,7 +27,7 @@ class RepositoriesBazaarControllerTest < ActionController::TestCase
   PRJ_ID = 3
 
   def setup
-    User.current = nil
+    sign_out(:user)
     @project = Project.find(PRJ_ID)
     @repository = Repository::Bazaar.create(
                     :project      => @project,
@@ -38,7 +38,7 @@ class RepositoriesBazaarControllerTest < ActionController::TestCase
 
   if File.directory?(REPOSITORY_PATH)
     def test_get_new
-      @request.session[:user_id] = 1
+      sign_in users(:users_001)
       @project.repository.destroy
       get :new, :project_id => 'subproject1', :repository_scm => 'Bazaar'
       assert_response :success
@@ -160,7 +160,7 @@ class RepositoriesBazaarControllerTest < ActionController::TestCase
     end
 
     def test_destroy_valid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       assert_equal 0, @repository.changesets.count
       @repository.fetch_changesets
       assert @repository.changesets.count > 0
@@ -174,7 +174,7 @@ class RepositoriesBazaarControllerTest < ActionController::TestCase
     end
 
     def test_destroy_invalid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       @project.repository.destroy
       @repository = Repository::Bazaar.create!(
                     :project      => @project,

@@ -29,7 +29,7 @@ class RepositoriesFilesystemControllerTest < ActionController::TestCase
   def setup
     @ruby19_non_utf8_pass =
         (RUBY_VERSION >= '1.9' && Encoding.default_external.to_s != 'UTF-8')
-    User.current = nil
+    sign_out(:user)
     Setting.enabled_scm << 'Filesystem' unless Setting.enabled_scm.include?('Filesystem')
     @project = Project.find(PRJ_ID)
     @repository = Repository::Filesystem.create(
@@ -42,7 +42,7 @@ class RepositoriesFilesystemControllerTest < ActionController::TestCase
 
   if File.directory?(REPOSITORY_PATH)
     def test_get_new
-      @request.session[:user_id] = 1
+      sign_in users(:users_001)
       @project.repository.destroy
       get :new, :project_id => 'subproject1', :repository_scm => 'Filesystem'
       assert_response :success
@@ -130,7 +130,7 @@ class RepositoriesFilesystemControllerTest < ActionController::TestCase
     end
 
     def test_destroy_valid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
 
       assert_difference 'Repository.count', -1 do
         delete :destroy, :id => @repository.id
@@ -141,7 +141,7 @@ class RepositoriesFilesystemControllerTest < ActionController::TestCase
     end
 
     def test_destroy_invalid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       @project.repository.destroy
       @repository = Repository::Filesystem.create!(
                       :project       => @project,

@@ -19,7 +19,7 @@ require File.expand_path('../test_case', __FILE__)
 require 'tmpdir'
 
 class RedminePmTest::RepositorySubversionTest < RedminePmTest::TestCase
-  fixtures :projects, :users, :members, :roles, :member_roles, :auth_sources
+  fixtures :projects, :users, :members, :roles, :member_roles
 
   SVN_BIN = Redmine::Configuration['scm_subversion_command'] || "svn"
 
@@ -216,13 +216,13 @@ class RedminePmTest::RepositorySubversionTest < RedminePmTest::TestCase
       ldap_user = User.new(:mail => 'example1@redmine.org', :firstname => 'LDAP', :lastname => 'user', :auth_source_id => 1)
       ldap_user.login = 'example1'
       ldap_user.save!
-  
+
       with_settings :login_required => '1' do
         with_credentials "example1", "123456" do
           assert_success "ls", svn_url
         end
       end
-  
+
       with_settings :login_required => '1' do
         with_credentials "example1", "wrong" do
           assert_failure "ls", svn_url

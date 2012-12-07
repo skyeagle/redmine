@@ -23,11 +23,11 @@ class RepositoriesControllerTest < ActionController::TestCase
            :issue_categories, :enumerations, :custom_fields, :custom_values, :trackers
 
   def setup
-    User.current = nil
+    sign_out(:user)
   end
 
   def test_new
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :new, :project_id => 'subproject1'
     assert_response :success
     assert_template 'new'
@@ -37,7 +37,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_new_should_propose_enabled_scm_only
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     with_settings :enabled_scm => ['Mercurial', 'Git'] do
       get :new, :project_id => 'subproject1'
     end
@@ -53,7 +53,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_create
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     assert_difference 'Repository.count' do
       post :create, :project_id => 'subproject1',
            :repository_scm => 'Subversion',
@@ -66,7 +66,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_create_with_failure
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     assert_no_difference 'Repository.count' do
       post :create, :project_id => 'subproject1',
            :repository_scm => 'Subversion',
@@ -79,7 +79,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_edit
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     get :edit, :id => 11
     assert_response :success
     assert_template 'edit'
@@ -88,14 +88,14 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_update
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     put :update, :id => 11, :repository => {:password => 'test_update'}
     assert_response 302
     assert_equal 'test_update', Repository.find(11).password
   end
 
   def test_update_with_failure
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     put :update, :id => 11, :repository => {:password => 'x'*260}
     assert_response :success
     assert_template 'edit'
@@ -103,7 +103,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_destroy
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     assert_difference 'Repository.count', -1 do
       delete :destroy, :id => 11
     end
@@ -162,7 +162,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_add_related_issue
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Changeset.find(103).issues.size' do
       xhr :post, :add_related_issue, :id => 1, :rev => 4, :issue_id => 2, :format => 'js'
       assert_response :success
@@ -175,7 +175,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_add_related_issue_with_invalid_issue_id
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_no_difference 'Changeset.find(103).issues.size' do
       xhr :post, :add_related_issue, :id => 1, :rev => 4, :issue_id => 9999, :format => 'js'
       assert_response :success
@@ -189,7 +189,7 @@ class RepositoriesControllerTest < ActionController::TestCase
     Changeset.find(103).issues << Issue.find(1)
     Changeset.find(103).issues << Issue.find(2)
 
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     assert_difference 'Changeset.find(103).issues.size', -1 do
       xhr :delete, :remove_related_issue, :id => 1, :rev => 4, :issue_id => 2, :format => 'js'
       assert_response :success
@@ -218,7 +218,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_get_committers
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     # add a commit with an unknown user
     Changeset.create!(
         :repository => Project.find(1).repository,
@@ -246,7 +246,7 @@ class RepositoriesControllerTest < ActionController::TestCase
   end
 
   def test_post_committers
-    @request.session[:user_id] = 2
+    sign_in users(:users_002)
     # add a commit with an unknown user
     c = Changeset.create!(
             :repository => Project.find(1).repository,

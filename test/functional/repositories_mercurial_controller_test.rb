@@ -32,7 +32,7 @@ class RepositoriesMercurialControllerTest < ActionController::TestCase
      (RUBY_VERSION >= '1.9' && Encoding.default_external.to_s != 'UTF-8')
 
   def setup
-    User.current = nil
+    sign_out(:user)
     @project    = Project.find(PRJ_ID)
     @repository = Repository::Mercurial.create(
                       :project => @project,
@@ -61,7 +61,7 @@ class RepositoriesMercurialControllerTest < ActionController::TestCase
   elsif File.directory?(REPOSITORY_PATH)
 
     def test_get_new
-      @request.session[:user_id] = 1
+      sign_in users(:users_001)
       @project.repository.destroy
       get :new, :project_id => 'subproject1', :repository_scm => 'Mercurial'
       assert_response :success
@@ -487,7 +487,7 @@ class RepositoriesMercurialControllerTest < ActionController::TestCase
     end
 
     def test_destroy_valid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       assert_equal 0, @repository.changesets.count
       @repository.fetch_changesets
       assert_equal NUM_REV, @repository.changesets.count
@@ -501,7 +501,7 @@ class RepositoriesMercurialControllerTest < ActionController::TestCase
     end
 
     def test_destroy_invalid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       @project.repository.destroy
       @repository = Repository::Mercurial.create!(
                       :project => Project.find(PRJ_ID),

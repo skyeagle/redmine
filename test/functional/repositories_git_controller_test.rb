@@ -41,7 +41,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
     @ruby19_non_utf8_pass =
       (RUBY_VERSION >= '1.9' && Encoding.default_external.to_s != 'UTF-8')
 
-    User.current = nil
+    sign_out(:user)
     @project    = Project.find(PRJ_ID)
     @repository = Repository::Git.create(
                       :project       => @project,
@@ -56,7 +56,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
   end
 
   def test_create_and_update
-    @request.session[:user_id] = 1
+    sign_in users(:users_001)
     assert_difference 'Repository.count' do
       post :create, :project_id => 'subproject1',
                     :repository_scm => 'Git',
@@ -94,7 +94,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
     WINDOWS_SKIP_STR = "TODO: This test fails in Git for Windows above 1.7.10"
 
     def test_get_new
-      @request.session[:user_id] = 1
+      sign_in users(:users_001)
       @project.repository.destroy
       get :new, :project_id => 'subproject1', :repository_scm => 'Git'
       assert_response :success
@@ -390,7 +390,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
       assert_not_nil diff
       assert_tag :tag => "form",
                  :attributes => {
-                   :action => "/projects/subproject1/repository/test-diff-path/" + 
+                   :action => "/projects/subproject1/repository/test-diff-path/" +
                                 "revisions/61b685fbe55ab05b/diff"
                  }
       assert_tag :tag => 'input',
@@ -449,7 +449,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
       user = User.find(1)
       assert_nil user.pref[:diff_type]
 
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       get :diff,
           :id   => PRJ_ID,
           :rev  => '2f9c0091c754a91af7a9c478e36556b4bde8dcf7'
@@ -582,7 +582,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
     end
 
     def test_destroy_valid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       assert_equal 0, @repository.changesets.count
       @repository.fetch_changesets
       @project.reload
@@ -597,7 +597,7 @@ class RepositoriesGitControllerTest < ActionController::TestCase
     end
 
     def test_destroy_invalid_repository
-      @request.session[:user_id] = 1 # admin
+      sign_in users(:users_001) # admin
       @project.repository.destroy
       @repository = Repository::Git.create!(
                       :project       => @project,
