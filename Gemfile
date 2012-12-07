@@ -69,6 +69,10 @@ platforms :jruby do
   end
 end
 
+group :development, :test do
+  gem "parallel_tests", github: 'grosser/parallel_tests'
+end
+
 group :development do
   gem "rdoc", ">= 2.4.2"
   gem "yard"
