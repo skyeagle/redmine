@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class Mailer < ActionMailer::Base
+  include Devise::Mailers::Helpers
   layout 'mailer'
   helper :application
   helper :issues
@@ -274,20 +275,14 @@ class Mailer < ActionMailer::Base
       :subject => l(:mail_subject_register, Setting.app_title)
   end
 
-  def lost_password(token)
-    set_language_if_valid(token.user.language)
-    @token = token
-    @url = url_for(:controller => 'account', :action => 'lost_password', :token => token.value)
-    mail :to => token.user.email,
-      :subject => l(:mail_subject_lost_password, Setting.app_title)
+  def confirmation_instructions(record)
+    set_language_if_valid(record.language)
+    devise_mail(record, :confirmation_instructions)
   end
 
-  def register(token)
-    set_language_if_valid(token.user.language)
-    @token = token
-    @url = url_for(:controller => 'account', :action => 'activate', :token => token.value)
-    mail :to => token.user.email,
-      :subject => l(:mail_subject_register, Setting.app_title)
+  def reset_password_instructions(record)
+    set_language_if_valid(record.language)
+    devise_mail(record, :reset_password_instructions)
   end
 
   def test_email(user)

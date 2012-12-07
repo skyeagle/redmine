@@ -307,7 +307,7 @@ class MailerTest < ActiveSupport::TestCase
 
       Watcher.create!(:watchable => @issue, :user => user)
       assert Mailer.issue_add(@issue).deliver
-      assert last_email.bcc.include?(user.mail)
+      assert last_email.bcc.include?(user.email)
     end
 
     should "not notify watchers not allowed to view the issue" do
@@ -315,7 +315,7 @@ class MailerTest < ActiveSupport::TestCase
       Watcher.create!(:watchable => @issue, :user => user)
       Role.non_member.remove_permission!(:view_issues)
       assert Mailer.issue_add(@issue).deliver
-      assert !last_email.bcc.include?(user.mail)
+      assert !last_email.bcc.include?(user.email)
     end
   end
 
@@ -419,7 +419,7 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_message_posted
     message = Message.first
-    recipients = ([message.root] + message.root.children).collect {|m| m.author.mail if m.author}
+    recipients = ([message.root] + message.root.children).collect {|m| m.author.email if m.author}
     recipients = recipients.compact.uniq
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
@@ -467,29 +467,38 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_lost_password
-    token = Token.find(2)
-    valid_languages.each do |lang|
-      token.user.update_attribute :language, lang.to_s
-      token.reload
-      assert Mailer.lost_password(token).deliver
-    end
-  end
-
-  def test_register
-    token = Token.find(1)
+    user = users(:users_002)
+    user.send(:generate_reset_password_token!)
     Setting.host_name = 'redmine.foo'
     Setting.protocol = 'https'
 
     valid_languages.each do |lang|
-      token.user.update_attribute :language, lang.to_s
-      token.reload
-      ActionMailer::Base.deliveries.clear
-      assert Mailer.register(token).deliver
+      user.update_attribute :language, lang.to_s
+      assert Mailer.reset_password_instructions(user).deliver
       mail = last_email
       assert_select_email do
         assert_select "a[href=?]",
-                      "https://redmine.foo/account/activate?token=#{token.value}",
-                      :text => "https://redmine.foo/account/activate?token=#{token.value}"
+                      "https://redmine.foo/users/password/edit?reset_password_token=#{user.reset_password_token}",
+                      :text => "https://redmine.foo/users/password/edit?reset_password_token=#{user.reset_password_token}"
+      end
+    end
+  end
+
+  def test_register
+    user = users(:users_002)
+    user.send(:generate_confirmation_token!)
+    Setting.host_name = 'redmine.foo'
+    Setting.protocol = 'https'
+
+    valid_languages.each do |lang|
+      user.update_attribute :language, lang.to_s
+      ActionMailer::Base.deliveries.clear
+      assert Mailer.confirmation_instructions(user).deliver
+      mail = last_email
+      assert_select_email do
+        assert_select "a[href=?]",
+                      "https://redmine.foo/users/confirmation?confirmation_token=#{user.confirmation_token}",
+                      :text => "https://redmine.foo/users/confirmation?confirmation_token=#{user.confirmation_token}"
       end
     end
   end
