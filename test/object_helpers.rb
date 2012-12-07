@@ -106,16 +106,6 @@ module ObjectHelpers
     version
   end
 
-  def AuthSource.generate!(attributes={})
-    @generated_auth_source_name ||= 'Auth 0'
-    @generated_auth_source_name.succ!
-    source = AuthSource.new(attributes)
-    source.name = @generated_auth_source_name if source.name.blank?
-    yield source if block_given?
-    source.save!
-    source
-  end
-
   def Board.generate!(attributes={})
     @generated_board_name ||= 'Forum 0'
     @generated_board_name.succ!
