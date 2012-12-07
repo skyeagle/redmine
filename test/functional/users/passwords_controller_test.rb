@@ -32,6 +32,9 @@ class Users::PasswordsControllerTest < ActionController::TestCase
   end
 
   def test_lost_password_for_active_user_should_create_a_token
+    Setting.host_name = 'redmine.foo'
+    Setting.protocol = 'https'
+
     ActionMailer::Base.deliveries.clear
     assert_difference 'ActionMailer::Base.deliveries.size' do
       post :create, :user => { :login => 'JSmith@somenet.foo' }
@@ -42,7 +45,7 @@ class Users::PasswordsControllerTest < ActionController::TestCase
     assert token.present?
 
     assert_select_email do
-      assert_select "a[href=?]", "http://example.com/users/password/edit?reset_password_token=#{token}"
+      assert_select "a[href=?]", "https://redmine.foo/users/password/edit?reset_password_token=#{token}"
     end
   end
 
