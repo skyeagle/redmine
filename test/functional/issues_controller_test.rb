@@ -327,7 +327,7 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_index_with_cross_project_query_in_session_should_show_project_issues
-    q = Query.create!(:name => "test", :user_id => 2, :is_public => false, :project => nil)
+    q = IssueQuery.create!(:name => "test", :user_id => 2, :is_public => false, :project => nil)
     @request.session[:query] = {:id => q.id, :project_id => 1}
 
     with_settings :display_subprojects_issues => '0' do
@@ -341,7 +341,7 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_private_query_should_not_be_available_to_other_users
-    q = Query.create!(:name => "private", :user => User.find(2), :is_public => false, :project => nil)
+    q = IssueQuery.create!(:name => "private", :user => User.find(2), :is_public => false, :project => nil)
     sign_in users(:users_003)
 
     get :index, :query_id => q.id
@@ -349,7 +349,7 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_private_query_should_be_available_to_its_user
-    q = Query.create!(:name => "private", :user => User.find(2), :is_public => false, :project => nil)
+    q = IssueQuery.create!(:name => "private", :user => User.find(2), :is_public => false, :project => nil)
     sign_in users(:users_002)
 
     get :index, :query_id => q.id
@@ -357,7 +357,7 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_public_query_should_be_available_to_other_users
-    q = Query.create!(:name => "private", :user => User.find(2), :is_public => true, :project => nil)
+    q = IssueQuery.create!(:name => "private", :user => User.find(2), :is_public => true, :project => nil)
     sign_in users(:users_003)
 
     get :index, :query_id => q.id
@@ -418,7 +418,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal 'text/csv; header=present', @response.content_type
     assert @response.body.starts_with?("#,")
     lines = @response.body.chomp.split("\n")
-    assert_equal assigns(:query).available_columns.size + 1, lines[0].split(',').size
+    assert_equal assigns(:query).available_inline_columns.size + 1, lines[0].split(',').size
   end
 
   def test_index_csv_with_multi_column_field
@@ -666,7 +666,7 @@ class IssuesControllerTest < ActionController::TestCase
 
     # query should use specified columns
     query = assigns(:query)
-    assert_kind_of Query, query
+    assert_kind_of IssueQuery, query
     assert_equal columns, query.column_names.map(&:to_s)
 
     # columns should be stored in session
@@ -688,7 +688,7 @@ class IssuesControllerTest < ActionController::TestCase
 
     # query should use specified columns
     query = assigns(:query)
-    assert_kind_of Query, query
+    assert_kind_of IssueQuery, query
     assert_equal [:project, :tracker, :subject, :assigned_to], query.columns.map(&:name)
   end
 
@@ -699,7 +699,7 @@ class IssuesControllerTest < ActionController::TestCase
 
     # query should use specified columns
     query = assigns(:query)
-    assert_kind_of Query, query
+    assert_kind_of IssueQuery, query
     assert_equal columns.map(&:to_sym), query.columns.map(&:name)
   end
 
@@ -710,7 +710,7 @@ class IssuesControllerTest < ActionController::TestCase
 
     # query should use specified columns
     query = assigns(:query)
-    assert_kind_of Query, query
+    assert_kind_of IssueQuery, query
     assert_equal columns, query.column_names.map(&:to_s)
 
     assert_select 'table.issues td.cf_2.string'
@@ -821,6 +821,17 @@ class IssuesControllerTest < ActionController::TestCase
     assert_include '3,""', lines
 
     get :index, :set_filter => 1, :c => %w(subject relations), :format => 'pdf'
+    assert_response :success
+    assert_equal 'application/pdf', response.content_type
+  end
+
+  def test_index_with_description_column
+    get :index, :set_filter => 1, :c => %w(subject description)
+
+    assert_select 'table.issues thead th', 3 # columns: chekbox + id + subject
+    assert_select 'td.description[colspan=3]', :text => 'Unable to print recipes'
+
+    get :index, :set_filter => 1, :c => %w(subject description), :format => 'pdf'
     assert_response :success
     assert_equal 'application/pdf', response.content_type
   end
@@ -989,7 +1000,7 @@ class IssuesControllerTest < ActionController::TestCase
     get :show, :id => 1
 
     assert_select 'form#issue-form[method=post][enctype=multipart/form-data]' do
-      assert_select 'input[type=file][name=?]', 'attachments[1][file]'
+      assert_select 'input[type=file][name=?]', 'attachments[dummy][file]'
     end
   end
 
@@ -1125,7 +1136,7 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_show_should_display_prev_next_links_with_saved_query_in_session
-    query = Query.create!(:name => 'test', :is_public => true,  :user_id => 1,
+    query = IssueQuery.create!(:name => 'test', :is_public => true,  :user_id => 1,
       :filters => {'status_id' => {:values => ['5'], :operator => '='}},
       :sort_criteria => [['id', 'asc']])
     @request.session[:query] = {:id => query.id, :project_id => nil}
@@ -1217,7 +1228,7 @@ class IssuesControllerTest < ActionController::TestCase
     CustomValue.create!(:custom_field => cf, :customized => Issue.find(3), :value => '3')
     CustomValue.create!(:custom_field => cf, :customized => Issue.find(5), :value => '')
 
-    query = Query.create!(:name => 'test', :is_public => true,  :user_id => 1, :filters => {},
+    query = IssueQuery.create!(:name => 'test', :is_public => true,  :user_id => 1, :filters => {},
       :sort_criteria => [["cf_#{cf.id}", 'asc'], ['id', 'asc']])
     @request.session[:query] = {:id => query.id, :project_id => nil}
 
@@ -1559,8 +1570,7 @@ class IssuesControllerTest < ActionController::TestCase
     get :new, :project_id => 1, :tracker_id => 1
 
     assert_select 'form[id=issue-form][method=post][enctype=multipart/form-data]' do
-      assert_select 'input[name=?][type=file]', 'attachments[1][file]'
-      assert_select 'input[name=?][maxlength=255]', 'attachments[1][description]'
+      assert_select 'input[name=?][type=file]', 'attachments[dummy][file]'
     end
   end
 
@@ -2155,7 +2165,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_nil attachment.container
 
     assert_tag 'input', :attributes => {:name => 'attachments[p0][token]', :value => attachment.token}
-    assert_tag 'span', :content => /testfile.txt/
+    assert_tag 'input', :attributes => {:name => 'attachments[p0][filename]', :value => 'testfile.txt'}
   end
 
   def test_post_create_with_failure_should_keep_saved_attachments
@@ -2174,7 +2184,7 @@ class IssuesControllerTest < ActionController::TestCase
     end
 
     assert_tag 'input', :attributes => {:name => 'attachments[p0][token]', :value => attachment.token}
-    assert_tag 'span', :content => /testfile.txt/
+    assert_tag 'input', :attributes => {:name => 'attachments[p0][filename]', :value => 'testfile.txt'}
   end
 
   def test_post_create_should_attach_saved_attachments
@@ -2957,7 +2967,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_nil attachment.container
 
     assert_tag 'input', :attributes => {:name => 'attachments[p0][token]', :value => attachment.token}
-    assert_tag 'span', :content => /testfile.txt/
+    assert_tag 'input', :attributes => {:name => 'attachments[p0][filename]', :value => 'testfile.txt'}
   end
 
   def test_put_update_with_failure_should_keep_saved_attachments
@@ -2976,7 +2986,7 @@ class IssuesControllerTest < ActionController::TestCase
     end
 
     assert_tag 'input', :attributes => {:name => 'attachments[p0][token]', :value => attachment.token}
-    assert_tag 'span', :content => /testfile.txt/
+    assert_tag 'input', :attributes => {:name => 'attachments[p0][filename]', :value => 'testfile.txt'}
   end
 
   def test_put_update_should_attach_saved_attachments

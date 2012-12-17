@@ -34,7 +34,7 @@ class Group < Principal
     self.status = '1'
   end
 
-  scope :sorted, order("#{table_name}.lastname ASC")
+  scope :sorted, lambda { order("#{table_name}.lastname ASC") }
 
   safe_attributes 'name',
     'user_ids',

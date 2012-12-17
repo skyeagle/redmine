@@ -37,6 +37,7 @@ class WikiController < ApplicationController
   before_filter :find_existing_or_new_page, :only => [:show, :edit, :update]
   before_filter :find_existing_page, :only => [:rename, :protect, :history, :diff, :annotate, :add_attachment, :destroy, :destroy_version]
   accept_api_auth :index, :show, :update, :destroy
+  before_filter :find_attachments, :only => [:preview]
 
   helper :attachments
   include AttachmentsHelper
@@ -159,10 +160,10 @@ class WikiController < ApplicationController
       call_hook(:controller_wiki_edit_after_save, { :params => params, :page => @page})
 
       respond_to do |format|
-        format.html { redirect_to :action => 'show', :project_id => @project, :id => @page.title }
+        format.html { redirect_to project_wiki_page_path(@project, @page.title) }
         format.api {
           if was_new_page
-            render :action => 'show', :status => :created, :location => url_for(:controller => 'wiki', :action => 'show', :project_id => @project, :id => @page.title)
+            render :action => 'show', :status => :created, :location => project_wiki_page_path(@project, @page.title)
           else
             render_api_ok
           end
@@ -199,13 +200,13 @@ class WikiController < ApplicationController
     @original_title = @page.pretty_title
     if request.post? && @page.update_attributes(params[:wiki_page])
       flash[:notice] = l(:notice_successful_update)
-      redirect_to :action => 'show', :project_id => @project, :id => @page.title
+      redirect_to project_wiki_page_path(@project, @page.title)
     end
   end
 
   def protect
     @page.update_attribute :protected, params[:protected]
-    redirect_to :action => 'show', :project_id => @project, :id => @page.title
+    redirect_to project_wiki_page_path(@project, @page.title)
   end
 
   # show page history
@@ -261,7 +262,7 @@ class WikiController < ApplicationController
     end
     @page.destroy
     respond_to do |format|
-      format.html { redirect_to :action => 'index', :project_id => @project }
+      format.html { redirect_to project_wiki_index_path(@project) }
       format.api { render_api_ok }
     end
   end
@@ -271,7 +272,7 @@ class WikiController < ApplicationController
 
     @content = @page.content_for_version(params[:version])
     @content.destroy
-    redirect_to_referer_or :action => 'history', :id => @page.title, :project_id => @project
+    redirect_to_referer_or history_project_wiki_page_path(@project, @page.title) 
   end
 
   # Export wiki to a single pdf or html file
@@ -293,7 +294,7 @@ class WikiController < ApplicationController
     # page is nil when previewing a new page
     return render_403 unless page.nil? || editable?(page)
     if page
-      @attachements = page.attachments
+      @attachments += page.attachments
       @previewed = page.content
     end
     @text = params[:content][:text]

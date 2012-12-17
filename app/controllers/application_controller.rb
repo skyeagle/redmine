@@ -205,6 +205,16 @@ class ApplicationController < ActionController::Base
     render_404
   end
 
+  def find_attachments
+    if (attachments = params[:attachments]).present?
+      att = attachments.values.collect do |attachment|
+        Attachment.find_by_token( attachment[:token] ) if attachment[:token].present?
+      end
+      att.compact!
+    end
+    @attachments = att || []
+  end
+
   # make sure that the user is a member of the project (or admin) if project is private
   # used as a before_filter for actions that do not require any particular permission on the project
   def check_project_privacy
@@ -227,6 +237,16 @@ class ApplicationController < ActionController::Base
       url = CGI.unescape(referer.to_s)
     end
     url
+  end
+
+  # Returns the path to project issues or to the cross-project
+  # issue list if project is nil
+  def _issues_path(project, *args)
+    if project
+      project_issues_path(project, *args)
+    else
+      issues_path(*args)
+    end
   end
 
   def redirect_back_or_default(default)

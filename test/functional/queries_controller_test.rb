@@ -24,6 +24,12 @@ class QueriesControllerTest < ActionController::TestCase
     sign_out(:user)
   end
 
+  def test_index
+    get :index
+    # HTML response not implemented
+    assert_response 406
+  end
+
   def test_new_project_query
     sign_in users(:users_002)
     get :new, :project_id => 1

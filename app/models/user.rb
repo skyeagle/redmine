@@ -30,12 +30,6 @@ class User < Principal
   # Setup accessible (or protected) attributes for your model
   include Redmine::SafeAttributes
 
-  # Account statuses
-  STATUS_ANONYMOUS  = 0
-  STATUS_ACTIVE     = 1
-  STATUS_REGISTERED = 2
-  STATUS_LOCKED     = 3
-
   # Different ways of displaying/sorting users
   USER_FORMATS = {
     :firstname_lastname => {
@@ -91,8 +85,8 @@ class User < Principal
   has_one :rss_token, :class_name => 'Token', :conditions => "action='feeds'"
   has_one :api_token, :class_name => 'Token', :conditions => "action='api'"
 
-  scope :logged, :conditions => "#{User.table_name}.status <> #{STATUS_ANONYMOUS}"
-  scope :status, lambda {|arg| arg.blank? ? {} : {:conditions => {:status => arg.to_i}} }
+  scope :logged, lambda { where("#{User.table_name}.status <> #{STATUS_ANONYMOUS}") }
+  scope :status, lambda {|arg| where(arg.blank? ? nil : {:status => arg.to_i}) }
 
   acts_as_customizable
 
@@ -104,7 +98,7 @@ class User < Principal
   validates_presence_of :login, :firstname, :lastname, :if => Proc.new { |user| !user.is_a?(AnonymousUser) }
   validates_uniqueness_of :login, :if => Proc.new { |user| user.login_changed? && user.login.present? }, :case_sensitive => false
   # Login must contain lettres, numbers, underscores only
-  validates_format_of :login, :with => /^[a-z0-9_\-@\.]*$/i
+  validates_format_of :login, :with => /\A[a-z0-9_\-@\.]*\z/i
   validates_length_of :login, :maximum => LOGIN_LENGTH_LIMIT
   validates_length_of :firstname, :lastname, :maximum => 30
   validates_inclusion_of :mail_notification, :in => MAIL_NOTIFICATION_OPTIONS.collect(&:first), :allow_blank => true
