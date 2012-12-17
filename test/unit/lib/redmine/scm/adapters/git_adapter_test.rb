@@ -17,7 +17,7 @@
 
 require File.expand_path('../../../../../../test_helper', __FILE__)
 begin
-  require 'mocha'
+  require 'mocha/setup'
 
   class GitAdapterTest < ActiveSupport::TestCase
     REPOSITORY_PATH = Rails.root.join('tmp/test/git_repository').to_s
@@ -82,12 +82,12 @@ begin
         end
         assert_equal 6, brs.length
         br_issue_8857 = brs[0]
-        assert_equal 'issue-8857', br_issue_8857.to_s 
+        assert_equal 'issue-8857', br_issue_8857.to_s
         assert_equal '2a682156a3b6e77a8bf9cd4590e8db757f3c6c78', br_issue_8857.revision
         assert_equal br_issue_8857.scmid, br_issue_8857.revision
         assert_equal false, br_issue_8857.is_default
         br_latin_1_path = brs[1]
-        assert_equal 'latin-1-path-encoding', br_latin_1_path.to_s 
+        assert_equal 'latin-1-path-encoding', br_latin_1_path.to_s
         assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', br_latin_1_path.revision
         assert_equal br_latin_1_path.scmid, br_latin_1_path.revision
         assert_equal false, br_latin_1_path.is_default

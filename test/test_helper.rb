@@ -18,6 +18,7 @@
 #require 'shoulda'
 ENV["RAILS_ENV"] = "test"
 require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
+
 require 'rails/test_help'
 require Rails.root.join('test', 'mocks', 'open_id_authentication.rb').to_s
 

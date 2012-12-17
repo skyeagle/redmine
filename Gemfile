@@ -1,7 +1,7 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.9'
-gem 'devise', '~> 2.1.2', :github => 'plataformatec/devise'
+gem 'rails', :github => 'rails/rails', :branch => '3-2-stable'
+gem 'devise', :github => 'plataformatec/devise'
 gem 'devise-encryptable'
 gem "jquery-rails", "~> 2.0.2"
 gem "i18n", "~> 0.6.0"
@@ -86,7 +86,7 @@ group :test do
   platforms = [:mri_19]
   platforms << :jruby if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7"
   gem "test-unit", :platforms => platforms
-  gem "mocha", "0.12.3"
+  gem "mocha", "~> 0.13", :require => false
 end
 
 local_gemfile = File.join(File.dirname(__FILE__), "Gemfile.local")

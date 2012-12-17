@@ -299,11 +299,11 @@ class MailHandlerTest < ActiveSupport::TestCase
       assert_not_nil email
       assert email.subject.include?('Confirmation instructions')
 
-      assert_equal 1, email.to.size
-      login = email.to[0].match(/^#{Regexp.escape(issue.author.email)}$/)[0]
+      assert_equal 1, email.bcc.size
+      login = email.bcc[0].match(/^#{Regexp.escape(issue.author.email)}$/)[0]
       assert_equal issue.author.email, login
 
-      confirm_code = email.body.match(/#{Regexp.escape(issue.author.confirmation_token)}/m)[0]
+      confirm_code = email.body.encoded.match(/#{Regexp.escape(issue.author.confirmation_token)}/m)[0]
       assert_equal issue.author.confirmation_token, confirm_code
 
       assert_equal issue.author, User.find_first_by_auth_conditions(:login => login)
