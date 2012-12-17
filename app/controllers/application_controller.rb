@@ -85,7 +85,11 @@ class ApplicationController < ActionController::Base
   def check_if_login_required
     # no check needed if user is already logged in
     return true if User.current.logged?
-    require_login if Setting.login_required?
+    if Setting.login_required?
+      # Keep notice flash messages on redirect to sign_in page
+      flash['notice'].keep if flash['notice']
+      require_login
+    end
   end
 
   def set_localization
