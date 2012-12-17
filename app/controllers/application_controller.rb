@@ -87,7 +87,7 @@ class ApplicationController < ActionController::Base
     return true if User.current.logged?
     if Setting.login_required?
       # Keep notice flash messages on redirect to sign_in page
-      flash[:notice].keep if flash[:notice]
+      flash.keep(:notice) if flash[:notice]
       require_login
     end
   end
