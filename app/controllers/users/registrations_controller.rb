@@ -40,4 +40,10 @@ class Users::RegistrationsController < Devise::RegistrationsController
     end
     super
   end
+
+  protected
+
+  def after_inactive_sign_up_path_for(resource)
+    Setting.login_required? ? new_user_session_path : root_path
+  end
 end
