@@ -269,7 +269,9 @@ class UsersControllerTest < ActionController::TestCase
     Setting.bcc_recipients = '1'
 
     put :update, :id => u.id, :user => {:status => User::STATUS_ACTIVE}
-    assert u.reload.active?
+    u.reload
+    assert u.active?
+    assert u.active_for_authentication?
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert_equal ['foo.bar@somenet.foo'], mail.bcc

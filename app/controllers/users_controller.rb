@@ -127,6 +127,9 @@ class UsersController < ApplicationController
     @user.safe_attributes = params[:user]
     # Was the account actived ? (do it before User#save clears the change)
     was_activated = (@user.status_change == [User::STATUS_REGISTERED, User::STATUS_ACTIVE])
+
+    @user.skip_confirmation! if was_activated
+
     # TODO: Similar to My#account
     @user.pref.attributes = params[:pref]
     @user.pref[:no_self_notified] = (params[:no_self_notified] == '1')
