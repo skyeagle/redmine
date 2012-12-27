@@ -1212,7 +1212,7 @@ ru:
   devise:
     failure:
       already_authenticated: "Вы уже вошли в систему."
-      unauthenticated: 'Чтобы продолжить, Вам необходимо сначала <a href="/users/auth/webmoney">войти в систему</a>.'
+      unauthenticated: 'Чтобы продолжить, Вам необходимо сначала войти в систему.'
       unconfirmed: "Вы должны подтвердить вашу учётную запись."
       locked: "Ваша учётная запись заблокирована."
       invalid: "Неверный адрес e-mail или пароль."
