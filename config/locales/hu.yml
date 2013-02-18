@@ -203,8 +203,6 @@
   mail_subject_account_activation_request: Redmine azonosító aktiválási kérelem
   mail_body_account_activation_request: "Egy új felhasználó (%{value}) regisztrált, azonosítója jóváhasgyásra várakozik:"
 
-  gui_validation_error: 1 hiba
-  gui_validation_error_plural: "%{count} hiba"
 
   field_name: Név
   field_description: Leírás
@@ -414,8 +412,6 @@
   label_text: Hosszú szöveg
   label_attribute: Tulajdonság
   label_attribute_plural: Tulajdonságok
-  label_download: "%{count} Letöltés"
-  label_download_plural: "%{count} Letöltés"
   label_no_data: Nincs megjeleníthető adat
   label_change_status: Státusz módosítása
   label_history: Történet
@@ -515,8 +511,6 @@
   label_repository: Forráskód
   label_repository_plural: Forráskódok
   label_browse: Tallóz
-  label_modification: "%{count} változás"
-  label_modification_plural: "%{count} változás"
   label_revision: Revízió
   label_revision_plural: Revíziók
   label_associated_revisions: Kapcsolt revíziók
@@ -776,7 +770,6 @@
   permission_comment_news: Hírek kommentelése
   permission_delete_messages: Üzenetek törlése
   permission_select_project_modules: Projekt modulok kezelése
-  permission_manage_documents: Dokumentumok kezelése
   permission_edit_wiki_pages: Wiki oldalak szerkesztése
   permission_add_issue_watchers: Megfigyelők felvétele
   permission_view_gantt: Gannt diagramm megtekintése
@@ -1101,3 +1094,13 @@
   label_in_the_next_days: in the next
   label_in_the_past_days: in the past
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

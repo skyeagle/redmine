@@ -205,8 +205,6 @@ fi:
   mail_subject_account_activation_request: "%{value} tilin aktivointi pyyntö"
   mail_body_account_activation_request: "Uusi käyttäjä (%{value}) on rekisteröitynyt. Hänen tili odottaa hyväksyntääsi:"
 
-  gui_validation_error: 1 virhe
-  gui_validation_error_plural: "%{count} virhettä"
 
   field_name: Nimi
   field_description: Kuvaus
@@ -396,8 +394,6 @@ fi:
   label_text: Pitkä merkkijono
   label_attribute: Määre
   label_attribute_plural: Määreet
-  label_download: "%{count} Lataus"
-  label_download_plural: "%{count} Lataukset"
   label_no_data: Ei tietoa näytettäväksi
   label_change_status: Muutos tila
   label_history: Historia
@@ -486,8 +482,6 @@ fi:
   label_repository: Tietovarasto
   label_repository_plural: Tietovarastot
   label_browse: Selaus
-  label_modification: "%{count} muutos"
-  label_modification_plural: "%{count} muutettu"
   label_revision: Versio
   label_revision_plural: Versiot
   label_added: lisätty
@@ -778,7 +772,6 @@ fi:
   permission_comment_news: Kommentoi uutisia
   permission_delete_messages: Poista viestit
   permission_select_project_modules: Valitse projektin modulit
-  permission_manage_documents: Hallinnoi dokumentteja
   permission_edit_wiki_pages: Muokkaa wiki sivuja
   permission_add_issue_watchers: Lisää seuraajia
   permission_view_gantt: Näytä gantt kaavio
@@ -1103,3 +1096,13 @@ fi:
   label_in_the_next_days: in the next
   label_in_the_past_days: in the past
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

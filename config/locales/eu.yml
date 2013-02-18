@@ -202,8 +202,6 @@ eu:
   mail_subject_wiki_content_updated: "'%{id}' wiki orria eguneratu da"
   mail_body_wiki_content_updated: "%{author}-(e)k '%{id}' wiki orria eguneratu du."
 
-  gui_validation_error: akats 1
-  gui_validation_error_plural: "%{count} akats"
 
   field_name: Izena
   field_description: Deskribapena
@@ -376,7 +374,6 @@ eu:
   permission_edit_own_time_entries: Nork bere denbora egunkariak editatu
   permission_manage_news: Berriak kudeatu
   permission_comment_news: Berrien iruzkinak egin
-  permission_manage_documents: Dokumentuak kudeatu
   permission_view_documents: Dokumentuak ikusi
   permission_manage_files: Fitxategiak kudeatu
   permission_view_files: Fitxategiak ikusi
@@ -496,8 +493,6 @@ eu:
   label_text: Testu luzea
   label_attribute: Atributua
   label_attribute_plural: Atributuak
-  label_download: "Deskarga %{count}"
-  label_download_plural: "%{count} Deskarga"
   label_no_data: Ez dago erakusteko daturik
   label_change_status: Egoera aldatu
   label_history: Historikoa
@@ -600,8 +595,6 @@ eu:
   label_repository: Biltegia
   label_repository_plural: Biltegiak
   label_browse: Arakatu
-  label_modification: "aldaketa %{count}"
-  label_modification_plural: "%{count} aldaketa"
   label_branch: Adarra
   label_tag: Etiketa
   label_revision: Berrikuspena
@@ -1083,3 +1076,13 @@ eu:
   label_in_the_next_days: in the next
   label_in_the_past_days: in the past
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

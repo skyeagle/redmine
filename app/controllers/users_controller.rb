@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,8 +45,8 @@ class UsersController < ApplicationController
     scope = scope.in_group(params[:group_id]) if params[:group_id].present?
 
     @user_count = scope.count
-    @user_pages = Paginator.new self, @user_count, @limit, params['page']
-    @offset ||= @user_pages.current.offset
+    @user_pages = Paginator.new @user_count, @limit, params['page']
+    @offset ||= @user_pages.offset
     @users =  scope.order(sort_clause).limit(@limit).offset(@offset).all
 
     respond_to do |format|

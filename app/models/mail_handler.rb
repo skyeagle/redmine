@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -426,8 +426,8 @@ class MailHandler < ActionMailer::Base
     assign_string_attribute_with_limit(user, 'login', email_address, User::LOGIN_LENGTH_LIMIT)
 
     names = fullname.blank? ? email_address.gsub(/@.*$/, '').split('.') : fullname.split
-    assign_string_attribute_with_limit(user, 'firstname', names.shift)
-    assign_string_attribute_with_limit(user, 'lastname', names.join(' '))
+    assign_string_attribute_with_limit(user, 'firstname', names.shift, 30)
+    assign_string_attribute_with_limit(user, 'lastname', names.join(' '), 30)
     user.lastname = '-' if user.lastname.blank?
 
     password_length = [Setting.password_min_length.to_i, 10].max
@@ -437,7 +437,7 @@ class MailHandler < ActionMailer::Base
     unless user.valid?
       user.login = "user#{Redmine::Utils.random_hex(6)}" unless user.errors[:login].blank?
       user.firstname = "-" unless user.errors[:firstname].blank?
-      user.lastname  = "-" unless user.errors[:lastname].blank?
+      (puts user.errors[:lastname];user.lastname  = "-") unless user.errors[:lastname].blank?
     end
 
     user

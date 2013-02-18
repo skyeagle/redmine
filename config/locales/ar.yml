@@ -211,8 +211,6 @@ ar:
   mail_subject_wiki_content_updated: "'%{id}' تم تحديث صفحة ويكي"
   mail_body_wiki_content_updated: "The '%{id}'تم تحديث صفحة ويكي من قبل %{author}."
 
-  gui_validation_error: خطأ
-  gui_validation_error_plural: "%{count}أخطاء"
 
   field_name: الاسم
   field_description: الوصف
@@ -413,7 +411,6 @@ ar:
   permission_edit_own_time_entries: تعديل الدخولات الشخصية
   permission_manage_news: ادارة الاخبار
   permission_comment_news: اخبار التعليقات
-  permission_manage_documents: ادارة المستندات
   permission_view_documents: عرض المستندات
   permission_manage_files: ادارة الملفات
   permission_view_files: عرض الملفات
@@ -543,8 +540,6 @@ ar:
   label_text: نص طويل
   label_attribute: سمة
   label_attribute_plural: السمات
-  label_download: "تحميل"
-  label_download_plural: "تحميل"
   label_no_data: لا توجد بيانات للعرض
   label_change_status: تغيير الوضع
   label_history: التاريخ
@@ -650,8 +645,6 @@ ar:
   label_repository: المستودع
   label_repository_plural: المستودعات
   label_browse: تصفح
-  label_modification: "%{count} تغير"
-  label_modification_plural: "%{count}تغيرات "
   label_branch: فرع
   label_tag: ربط
   label_revision: مراجعة
@@ -1082,3 +1075,13 @@ ar:
   label_in_the_next_days: in the next
   label_in_the_past_days: in the past
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

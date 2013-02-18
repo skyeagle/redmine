@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,12 +19,12 @@ class IssueRelation < ActiveRecord::Base
   # Class used to represent the relations of an issue
   class Relations < Array
     include Redmine::I18n
-  
+
     def initialize(issue, *args)
       @issue = issue
       super(*args)
     end
-  
+
     def to_s(*args)
       map {|relation| "#{l(relation.label_for(@issue))} ##{relation.other_issue(@issue).id}"}.join(', ')
     end

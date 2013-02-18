@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ class Group < Principal
 
   validates_presence_of :lastname
   validates_uniqueness_of :lastname, :case_sensitive => false
-  validates_length_of :lastname, :maximum => 30
+  validates_length_of :lastname, :maximum => 255
 
   after_initialize :defaults
   before_destroy :remove_references_before_destroy

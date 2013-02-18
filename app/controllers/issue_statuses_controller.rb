@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ class IssueStatusesController < ApplicationController
   def index
     respond_to do |format|
       format.html {
-        @issue_status_pages, @issue_statuses = paginate :issue_statuses, :per_page => 25, :order => "position"
+        @issue_status_pages, @issue_statuses = paginate IssueStatus.sorted, :per_page => 25
         render :action => "index", :layout => false if request.xhr?
       }
       format.api {
@@ -68,7 +68,7 @@ class IssueStatusesController < ApplicationController
   rescue
     flash[:error] = l(:error_unable_delete_issue_status)
     redirect_to issue_statuses_path
-  end  	
+  end
 
   def update_issue_done_ratio
     if request.post? && IssueStatus.update_issue_done_ratios

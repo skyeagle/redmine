@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -275,12 +275,12 @@ class Mailer < ActionMailer::Base
       :subject => l(:mail_subject_register, Setting.app_title)
   end
 
-  def confirmation_instructions(record)
+  def confirmation_instructions(record, opts={})
     set_language_if_valid(record.language)
     devise_mail(record, :confirmation_instructions)
   end
 
-  def reset_password_instructions(record)
+  def reset_password_instructions(record, opts={})
     set_language_if_valid(record.language)
     devise_mail(record, :reset_password_instructions)
   end

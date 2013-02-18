@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -293,13 +293,20 @@ class TimelogControllerTest < ActionController::TestCase
     assert_response :success
     assert_template 'bulk_edit'
 
-    # System wide custom field
-    assert_tag :select, :attributes => {:name => 'time_entry[custom_field_values][10]'}
+    assert_select 'ul#bulk-selection' do
+      assert_select 'li', 2
+      assert_select 'li a', :text => '03/23/2007 - eCookbook: 4.25 hours'
+    end
 
-    # Activities
-    assert_select 'select[name=?]', 'time_entry[activity_id]' do
-      assert_select 'option[value=]', :text => '(No change)'
-      assert_select 'option[value=9]', :text => 'Design'
+    assert_select 'form#bulk_edit_form[action=?]', '/time_entries/bulk_update' do
+      # System wide custom field
+      assert_select 'select[name=?]', 'time_entry[custom_field_values][10]'
+  
+      # Activities
+      assert_select 'select[name=?]', 'time_entry[activity_id]' do
+        assert_select 'option[value=]', :text => '(No change)'
+        assert_select 'option[value=9]', :text => 'Design'
+      end
     end
   end
 
@@ -512,6 +519,25 @@ class TimelogControllerTest < ActionController::TestCase
     assert_equal [t3, t1, t2], assigns(:entries)
   end
 
+  def test_index_with_filter_on_issue_custom_field
+    issue = Issue.generate!(:project_id => 1, :tracker_id => 1, :custom_field_values => {2 => 'filter_on_issue_custom_field'})
+    entry = TimeEntry.generate!(:issue => issue, :hours => 2.5)
+
+    get :index, :f => ['issue.cf_2'], :op => {'issue.cf_2' => '='}, :v => {'issue.cf_2' => ['filter_on_issue_custom_field']}
+    assert_response :success
+    assert_equal [entry], assigns(:entries)
+  end
+
+  def test_index_with_issue_custom_field_column
+    issue = Issue.generate!(:project_id => 1, :tracker_id => 1, :custom_field_values => {2 => 'filter_on_issue_custom_field'})
+    entry = TimeEntry.generate!(:issue => issue, :hours => 2.5)
+
+    get :index, :c => %w(project spent_on issue comments hours issue.cf_2)
+    assert_response :success
+    assert_include :'issue.cf_2', assigns(:query).column_names
+    assert_select 'td.issue_cf_2', :text => 'filter_on_issue_custom_field'
+  end
+
   def test_index_atom_feed
     get :index, :project_id => 1, :format => 'atom'
     assert_response :success
@@ -526,7 +552,7 @@ class TimelogControllerTest < ActionController::TestCase
     assert_response :success
     assert_equal 'text/csv; header=present', @response.content_type
     assert @response.body.include?("Date,User,Activity,Project,Issue,Tracker,Subject,Hours,Comment,Overtime\n")
-    assert @response.body.include?("\n04/21/2007,redMine Admin,Design,eCookbook,3,Bug,Error 281 when updating a recipe,1.0,\"\",\"\"\n")
+    assert @response.body.include?("\n04/21/2007,Redmine Admin,Design,eCookbook,3,Bug,Error 281 when updating a recipe,1.0,\"\",\"\"\n")
   end
 
   def test_index_csv_export
@@ -535,7 +561,7 @@ class TimelogControllerTest < ActionController::TestCase
     assert_response :success
     assert_equal 'text/csv; header=present', @response.content_type
     assert @response.body.include?("Date,User,Activity,Project,Issue,Tracker,Subject,Hours,Comment,Overtime\n")
-    assert @response.body.include?("\n04/21/2007,redMine Admin,Design,eCookbook,3,Bug,Error 281 when updating a recipe,1.0,\"\",\"\"\n")
+    assert @response.body.include?("\n04/21/2007,Redmine Admin,Design,eCookbook,3,Bug,Error 281 when updating a recipe,1.0,\"\",\"\"\n")
   end
 
   def test_index_csv_export_with_multi_custom_field

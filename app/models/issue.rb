@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -67,7 +67,9 @@ class Issue < ActiveRecord::Base
 
   validates_length_of :subject, :maximum => 255
   validates_inclusion_of :done_ratio, :in => 0..100
-  validates_numericality_of :estimated_hours, :allow_nil => true
+  validates :estimated_hours, :numericality => {:greater_than_or_equal_to => 0, :allow_nil => true, :message => :invalid}
+  validates :start_date, :date => true
+  validates :due_date, :date => true
   validate :validate_issue, :validate_required_fields
 
   scope :visible, lambda {|*args|
@@ -83,9 +85,13 @@ class Issue < ActiveRecord::Base
   scope :on_active_project, lambda {
     includes(:status, :project, :tracker).where("#{Project.table_name}.status = ?", Project::STATUS_ACTIVE)
   }
+  scope :fixed_version, lambda {|versions|
+    ids = [versions].flatten.compact.map {|v| v.is_a?(Version) ? v.id : v}
+    ids.any? ? where(:fixed_version_id => ids) : where('1=0')
+  }
 
   before_create :default_assign
-  before_save :close_duplicates, :update_done_ratio_from_issue_status, :force_updated_on_change
+  before_save :close_duplicates, :update_done_ratio_from_issue_status, :force_updated_on_change, :update_closed_on
   after_save {|issue| issue.send :after_project_change if !issue.id_changed? && issue.project_id_changed?}
   after_save :reschedule_following_issues, :update_nested_set_attributes, :update_parent_attributes, :create_journal
   # Should be after_create but would be called before previous after_save callbacks
@@ -134,6 +140,11 @@ class Issue < ActiveRecord::Base
     end
   end
 
+  # Returns true if user or current user is allowed to edit or add a note to the issue
+  def editable?(user=User.current)
+    user.allowed_to?(:edit_issues, project) || user.allowed_to?(:add_issue_notes, project)
+  end
+
   def initialize(attributes=nil, *args)
     super
     if new_record?
@@ -143,6 +154,13 @@ class Issue < ActiveRecord::Base
       self.watcher_user_ids = []
     end
   end
+
+  def create_or_update
+    super
+  ensure
+    @status_was = nil
+  end
+  private :create_or_update
 
   # AR#Persistence#destroy would raise and RecordNotFound exception
   # if the issue was already deleted or updated (non matching lock_version).
@@ -419,7 +437,7 @@ class Issue < ActiveRecord::Base
 
     if attrs['parent_issue_id'].present?
       s = attrs['parent_issue_id'].to_s
-      unless (m = s.match(%r{\A#?(\d+)\z})) && Issue.visible(user).exists?(m[1])
+      unless (m = s.match(%r{\A#?(\d+)\z})) && (m[1] == parent_id.to_s || Issue.visible(user).exists?(m[1]))
         @invalid_parent_issue_id = attrs.delete('parent_issue_id')
       end
     end
@@ -527,14 +545,6 @@ class Issue < ActiveRecord::Base
   end
 
   def validate_issue
-    if due_date.nil? && @attributes['due_date'].present?
-      errors.add :due_date, :not_a_date
-    end
-
-    if start_date.nil? && @attributes['start_date'].present?
-      errors.add :start_date, :not_a_date
-    end
-
     if due_date && start_date && due_date < start_date
       errors.add :due_date, :greater_than_start_date
     end
@@ -634,6 +644,14 @@ class Issue < ActiveRecord::Base
     scope
   end
 
+  # Returns the initial status of the issue
+  # Returns nil for a new issue
+  def status_was
+    if status_id_was && status_id_was.to_i > 0
+      @status_was ||= IssueStatus.find_by_id(status_id_was)
+    end
+  end
+
   # Return true if the issue is closed, otherwise false
   def closed?
     self.status.is_closed?
@@ -654,9 +672,7 @@ class Issue < ActiveRecord::Base
   # Return true if the issue is being closed
   def closing?
     if !new_record? && status_id_changed?
-      status_was = IssueStatus.find_by_id(status_id_was)
-      status_new = IssueStatus.find_by_id(status_id)
-      if status_was && status_new && !status_was.is_closed? && status_new.is_closed?
+      if status_was && status && !status_was.is_closed? && status.is_closed?
         return true
       end
     end
@@ -911,7 +927,7 @@ class Issue < ActiveRecord::Base
         if leaf.start_date
           # Only move subtask if it starts at the same date as the parent
           # or if it starts before the given date
-          if start_date == leaf.start_date || date > leaf.start_date 
+          if start_date == leaf.start_date || date > leaf.start_date
             leaf.reschedule_on!(date)
           end
         else
@@ -1006,8 +1022,8 @@ class Issue < ActiveRecord::Base
     end
   end
 
-	# Returns true if issue's project is a valid
-	# parent issue project
+  # Returns true if issue's project is a valid
+  # parent issue project
   def valid_parent_project?(issue=parent)
     return true if issue.nil? || issue.project_id == project_id
 
@@ -1304,10 +1320,23 @@ class Issue < ActiveRecord::Base
     end
   end
 
-  # Make sure updated_on is updated when adding a note
+  # Make sure updated_on is updated when adding a note and set updated_on now
+  # so we can set closed_on with the same value on closing
   def force_updated_on_change
-    if @current_journal
+    if @current_journal || changed?
       self.updated_on = current_time_from_proper_timezone
+      if new_record?
+        self.created_on = updated_on
+      end
+    end
+  end
+
+  # Callback for setting closed_on when the issue is closed.
+  # The closed_on attribute stores the time of the last closing
+  # and is preserved when the issue is reopened.
+  def update_closed_on
+    if closing? || (new_record? && closed?)
+      self.closed_on = updated_on
     end
   end
 
@@ -1317,7 +1346,7 @@ class Issue < ActiveRecord::Base
     if @current_journal
       # attributes changes
       if @attributes_before_change
-        (Issue.column_names - %w(id root_id lft rgt lock_version created_on updated_on)).each {|c|
+        (Issue.column_names - %w(id root_id lft rgt lock_version created_on updated_on closed_on)).each {|c|
           before = @attributes_before_change[c]
           after = send(c)
           next if before == after || (before.blank? && after.blank?)

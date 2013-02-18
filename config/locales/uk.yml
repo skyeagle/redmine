@@ -174,8 +174,6 @@ uk:
   mail_subject_account_activation_request: "Запит на активацію облікового запису %{value}"
   mail_body_account_activation_request: "Новий користувач (%{value}) зареєструвався. Його обліковий запис чекає на ваше підтвердження:"
 
-  gui_validation_error: 1 помилка
-  gui_validation_error_plural: "%{count} помилки(ок)"
 
   field_name: Ім'я
   field_description: Опис
@@ -363,8 +361,6 @@ uk:
   label_text: Довгий текст
   label_attribute: Атрибут
   label_attribute_plural: атрибути
-  label_download: "%{count} Завантажено"
-  label_download_plural: "%{count} Завантажень"
   label_no_data: Немає даних для відображення
   label_change_status: Змінити статус
   label_history: Історія
@@ -453,8 +449,6 @@ uk:
   label_day_plural: днів(я)
   label_repository: Репозиторій
   label_browse: Проглянути
-  label_modification: "%{count} зміна"
-  label_modification_plural: "%{count} змін"
   label_revision: Версія
   label_revision_plural: Версій
   label_added: додано
@@ -754,7 +748,6 @@ uk:
   permission_comment_news: Comment news
   permission_delete_messages: Delete messages
   permission_select_project_modules: Select project modules
-  permission_manage_documents: Manage documents
   permission_edit_wiki_pages: Edit wiki pages
   permission_add_issue_watchers: Add watchers
   permission_view_gantt: View gantt chart
@@ -1077,3 +1070,13 @@ uk:
   label_in_the_next_days: in the next
   label_in_the_past_days: in the past
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

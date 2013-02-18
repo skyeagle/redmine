@@ -238,8 +238,6 @@ ko:
   mail_body_wiki_content_added: "%{author}이(가) 위키페이지 '%{id}'을(를) 추가하였습니다."
   mail_body_wiki_content_updated: "%{author}이(가) 위키페이지 '%{id}'을(를) 수정하였습니다."
 
-  gui_validation_error: 에러
-  gui_validation_error_plural: "%{count}개 에러"
 
   field_name: 이름
   field_description: 설명
@@ -400,7 +398,6 @@ ko:
   permission_edit_own_time_entries: 내 시간입력 편집
   permission_manage_news: 뉴스 관리
   permission_comment_news: 뉴스에 댓글달기
-  permission_manage_documents: 문서 관리
   permission_view_documents: 문서 보기
   permission_manage_files: 파일관리
   permission_view_files: 파일보기
@@ -518,8 +515,6 @@ ko:
   label_text: 텍스트
   label_attribute: 속성
   label_attribute_plural: 속성
-  label_download: "%{count}회 다운로드"
-  label_download_plural: "%{count}회 다운로드"
   label_no_data: 표시할 데이터가 없습니다.
   label_change_status: 상태 변경
   label_history: 이력
@@ -621,8 +616,6 @@ ko:
   label_repository: 저장소
   label_repository_plural: 저장소
   label_browse: 저장소 둘러보기
-  label_modification: "%{count} 변경"
-  label_modification_plural: "%{count} 변경"
   label_revision: 개정판
   label_revision_plural: 개정판
   label_associated_revisions: 관련된 개정판들
@@ -1132,3 +1125,13 @@ ko:
   label_in_the_next_days: 다음
   label_in_the_past_days: 지난
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

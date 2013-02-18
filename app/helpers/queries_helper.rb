@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,28 +24,7 @@ module QueriesHelper
 
   def filters_options(query)
     options = [[]]
-    sorted_options = query.available_filters.sort do |a, b|
-      ord = 0
-      if !(a[1][:order] == 20 && b[1][:order] == 20) 
-        ord = a[1][:order] <=> b[1][:order]
-      else
-        cn = (CustomField::CUSTOM_FIELDS_NAMES.index(a[1][:field].class.name) <=>
-                CustomField::CUSTOM_FIELDS_NAMES.index(b[1][:field].class.name))
-        if cn != 0
-          ord = cn
-        else
-          f = (a[1][:field] <=> b[1][:field])
-          if f != 0
-            ord = f
-          else
-            # assigned_to or author 
-            ord = (a[0] <=> b[0])
-          end
-        end
-      end
-      ord
-    end
-    options += sorted_options.map do |field, field_options|
+    options += query.available_filters.map do |field, field_options|
       [field_options[:name], field]
     end
   end
@@ -87,16 +66,14 @@ module QueriesHelper
       format_time(value)
     when 'Date'
       format_date(value)
-    when 'Fixnum', 'Float'
+    when 'Fixnum'
       if column.name == :done_ratio
         progress_bar(value, :width => '80px')
-      elsif  column.name == :spent_hours
-        sprintf "%.2f", value
-      elsif column.name == :hours
-        html_hours("%.2f" % value)
       else
-        h(value.to_s)
+        value.to_s
       end
+    when 'Float'
+      sprintf "%.2f", value
     when 'User'
       link_to_user value
     when 'Project'

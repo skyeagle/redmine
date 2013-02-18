@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@ class RolesController < ApplicationController
   def index
     respond_to do |format|
       format.html {
-        @role_pages, @roles = paginate :roles, :per_page => 25, :order => 'builtin, position'
+        @role_pages, @roles = paginate Role.sorted, :per_page => 25
         render :action => "index", :layout => false if request.xhr?
       }
       format.api {

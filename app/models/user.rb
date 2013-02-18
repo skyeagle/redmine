@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -114,6 +114,7 @@ class User < Principal
     group_id = group.is_a?(Group) ? group.id : group.to_i
     where("#{User.table_name}.id NOT IN (SELECT gu.user_id FROM #{table_name_prefix}groups_users#{table_name_suffix} gu WHERE gu.group_id = ?)", group_id)
   }
+  scope :sorted, lambda { order(*User.fields_for_order_statement)}
 
   def set_mail_notification
     self.mail_notification = Setting.default_notification_option if self.mail_notification.blank?
@@ -310,23 +311,24 @@ class User < Principal
   # Find a user account by matching the exact login and then a case-insensitive
   # version.  Exact matches will be given priority.
   def self.find_by_login(login)
-    # First look for an exact match
-    user = where(:login => login).all.detect {|u| u.login == login}
-    unless user
-      # Fail over to case-insensitive if none was found
-      user = where("LOWER(login) = ?", login.to_s.downcase).first
+    if login.present?
+      login = login.to_s
+      # First look for an exact match
+      user = where(:login => login).all.detect {|u| u.login == login}
+      unless user
+        # Fail over to case-insensitive if none was found
+        user = where("LOWER(login) = ?", login.downcase).first
+      end
+      user
     end
-    user
   end
 
   def self.find_by_rss_key(key)
-    token = Token.find_by_action_and_value('feeds', key.to_s)
-    token && token.user.active? ? token.user : nil
+    Token.find_active_user('feeds', key)
   end
 
   def self.find_by_api_key(key)
-    token = Token.find_by_action_and_value('api', key.to_s)
-    token && token.user.active? ? token.user : nil
+    Token.find_active_user('api', key)
   end
 
   # Makes find_by_email case-insensitive
@@ -406,7 +408,7 @@ class User < Principal
 
   # Return true if the user is a member of project
   def member_of?(project)
-    !roles_for_project(project).detect {|role| role.member?}.nil?
+    roles_for_project(project).any? {|role| role.member?}
   end
 
   # Returns a hash of user's projects grouped by roles
@@ -522,38 +524,26 @@ class User < Principal
   #
   # TODO: only supports Issue events currently
   def notify_about?(object)
-    case mail_notification
-    when 'all'
+    if mail_notification == 'all'
       true
-    when 'selected'
-      # user receives notifications for created/assigned issues on unselected projects
-      if object.is_a?(Issue) && (object.author == self || is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was))
-        true
-      else
-        false
-      end
-    when 'none'
+    elsif mail_notification.blank? || mail_notification == 'none'
       false
-    when 'only_my_events'
-      if object.is_a?(Issue) && (object.author == self || is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was))
-        true
-      else
-        false
-      end
-    when 'only_assigned'
-      if object.is_a?(Issue) && (is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was))
-        true
-      else
-        false
-      end
-    when 'only_owner'
-      if object.is_a?(Issue) && object.author == self
-        true
-      else
-        false
-      end
     else
-      false
+      case object
+      when Issue
+        case mail_notification
+        when 'selected', 'only_my_events'
+          # user receives notifications for created/assigned issues on unselected projects
+          object.author == self || is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was)
+        when 'only_assigned'
+          is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was)
+        when 'only_owner'
+          object.author == self
+        end
+      when News
+        # always send to project members except when mail_notification is set to 'none'
+        true
+      end
     end
   end
 

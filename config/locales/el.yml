@@ -194,8 +194,6 @@ el:
   mail_subject_wiki_content_updated: "'ενημερώθηκε η σελίδα wiki %{id}' "
   mail_body_wiki_content_updated: "Η σελίδα wiki  '%{id}' ενημερώθηκε από τον %{author}."
 
-  gui_validation_error: 1 σφάλμα
-  gui_validation_error_plural: "%{count} σφάλματα"
 
   field_name: Όνομα
   field_description: Περιγραφή
@@ -356,7 +354,6 @@ el:
   permission_edit_own_time_entries: Επεξεργασία δικού μου ιστορικού χρόνου
   permission_manage_news: Διαχείριση νέων
   permission_comment_news: Σχολιασμός νέων
-  permission_manage_documents: Διαχείριση εγγράφων
   permission_view_documents: Προβολή εγγράφων
   permission_manage_files: Διαχείριση αρχείων
   permission_view_files: Προβολή αρχείων
@@ -474,8 +471,6 @@ el:
   label_text: Μακροσκελές κείμενο
   label_attribute: Ιδιότητα
   label_attribute_plural: Ιδιότητες
-  label_download: "%{count} Μεταφόρτωση"
-  label_download_plural: "%{count} Μεταφορτώσεις"
   label_no_data: Δεν υπάρχουν δεδομένα
   label_change_status: Αλλαγή κατάστασης
   label_history: Ιστορικό
@@ -577,8 +572,6 @@ el:
   label_repository: Αποθετήριο
   label_repository_plural: Αποθετήρια
   label_browse: Πλοήγηση
-  label_modification: "%{count} τροποποίηση"
-  label_modification_plural: "%{count} τροποποιήσεις"
   label_branch: Branch
   label_tag: Tag
   label_revision: Αναθεώρηση
@@ -1082,3 +1075,13 @@ el:
   label_in_the_next_days: in the next
   label_in_the_past_days: in the past
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

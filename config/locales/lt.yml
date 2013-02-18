@@ -268,8 +268,6 @@ lt:
   mail_subject_wiki_content_updated: "'%{id}' atnaujintas wiki puslapis"
   mail_body_wiki_content_updated: "'%{id}' wiki puslapį atnaujino %{author}."
 
-  gui_validation_error: 1 klaida
-  gui_validation_error_plural: "%{count} klaidų(os)"
 
   field_name: Pavadinimas
   field_description: Aprašas
@@ -470,7 +468,6 @@ lt:
   permission_edit_own_time_entries: Redguoti savo laiko įrašus
   permission_manage_news: Valdyti naujienas
   permission_comment_news: Komentuoti naujienas
-  permission_manage_documents: Valdyti dokumentus
   permission_view_documents: Matyti dokumentus
   permission_manage_files: Valdyti failus
   permission_view_files: Matyti failus
@@ -600,8 +597,6 @@ lt:
   label_text: Ilgas tekstas
   label_attribute: Požymis
   label_attribute_plural: Požymiai
-  label_download: "%{count} persiuntimas"
-  label_download_plural: "%{count} persiuntimai"
   label_no_data: Nėra ką atvaizduoti
   label_change_status: Pakeitimo būsena
   label_history: Istorija
@@ -707,8 +702,6 @@ lt:
   label_repository: Saugykla
   label_repository_plural: Saugyklos
   label_browse: Naršyti
-  label_modification: "%{count} pakeitimas"
-  label_modification_plural: "%{count} pakeitimai"
   label_branch: Šaka
   label_tag: Tag
   label_revision: Revizija
@@ -1141,3 +1134,13 @@ lt:
   label_in_the_next_days: per ateinančias
   label_in_the_past_days: per paskutines
   label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,11 +21,11 @@ class IssuesController < ApplicationController
 
   before_filter :find_issue, :only => [:show, :edit, :update]
   before_filter :find_issues, :only => [:bulk_edit, :bulk_update, :destroy]
-  before_filter :find_project, :only => [:new, :create]
+  before_filter :find_project, :only => [:new, :create, :update_form]
   before_filter :authorize, :except => [:index]
   before_filter :find_optional_project, :only => [:index]
   before_filter :check_for_default_issue_status, :only => [:new, :create]
-  before_filter :build_new_issue_from_params, :only => [:new, :create]
+  before_filter :build_new_issue_from_params, :only => [:new, :create, :update_form]
   accept_rss_auth :index, :show
   accept_api_auth :index, :show, :create, :update, :destroy
 
@@ -71,8 +71,8 @@ class IssuesController < ApplicationController
       end
 
       @issue_count = @query.issue_count
-      @issue_pages = Paginator.new self, @issue_count, @limit, params['page']
-      @offset ||= @issue_pages.current.offset
+      @issue_pages = Paginator.new @issue_count, @limit, params['page']
+      @offset ||= @issue_pages.offset
       @issues = @query.issues(:include => [:assigned_to, :tracker, :priority, :category, :fixed_version],
                               :order => sort_clause,
                               :offset => @offset,
@@ -132,7 +132,6 @@ class IssuesController < ApplicationController
   def new
     respond_to do |format|
       format.html { render :action => 'new', :layout => !request.xhr? }
-      format.js { render :partial => 'update_form' }
     end
   end
 
@@ -200,6 +199,11 @@ class IssuesController < ApplicationController
         format.api  { render_validation_errors(@issue) }
       end
     end
+  end
+
+  # Updates the issue form when changing the project, status or tracker
+  # on issue creation/update
+  def update_form
   end
 
   # Bulk edit/copy a set of issues
@@ -279,7 +283,7 @@ class IssuesController < ApplicationController
         redirect_to project_issues_path(moved_issues.map(&:project).first)
       end
     else
-      redirect_back_or_default _issues_path(@project)
+      redirect_back_or_default _project_issues_path(@project)
     end
   end
 
@@ -312,7 +316,7 @@ class IssuesController < ApplicationController
       end
     end
     respond_to do |format|
-      format.html { redirect_back_or_default _issues_path(@project) }
+      format.html { redirect_back_or_default _project_issues_path(@project) }
       format.api  { render_api_ok }
     end
   end

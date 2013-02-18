@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -115,7 +115,7 @@ Redmine::AccessControl.map do |map|
     map.permission :manage_subtasks, {}
     map.permission :set_issues_private, {}
     map.permission :set_own_issues_private, {}, :require => :loggedin
-    map.permission :add_issue_notes, {:issues => [:edit, :update], :journals => [:new], :attachments => :upload}
+    map.permission :add_issue_notes, {:issues => [:edit, :update, :update_form], :journals => [:new], :attachments => :upload}
     map.permission :edit_issue_notes, {:journals => :edit}, :require => :loggedin
     map.permission :edit_own_issue_notes, {:journals => :edit}, :require => :loggedin
     map.permission :view_private_notes, {}, :read => true, :require => :member
@@ -127,7 +127,7 @@ Redmine::AccessControl.map do |map|
     map.permission :save_queries, {:queries => [:new, :create, :edit, :update, :destroy]}, :require => :loggedin
     # Watchers
     map.permission :view_issue_watchers, {}, :read => true
-    map.permission :add_issue_watchers, {:watchers => :new}
+    map.permission :add_issue_watchers, {:watchers => [:new, :create, :append, :autocomplete_for_user]}
     map.permission :delete_issue_watchers, {:watchers => :destroy}
   end
 
@@ -146,7 +146,9 @@ Redmine::AccessControl.map do |map|
   end
 
   map.project_module :documents do |map|
-    map.permission :manage_documents, {:documents => [:new, :create, :edit, :update, :destroy, :add_attachment]}, :require => :loggedin
+    map.permission :add_documents, {:documents => [:new, :create, :add_attachment]}, :require => :loggedin
+    map.permission :edit_documents, {:documents => [:edit, :update, :add_attachment]}, :require => :loggedin
+    map.permission :delete_documents, {:documents => [:destroy]}, :require => :loggedin
     map.permission :view_documents, {:documents => [:index, :show, :download]}, :read => true
   end
 
@@ -206,7 +208,7 @@ Redmine::MenuManager.map :account_menu do |menu|
   menu.push :login, :new_user_session_path, :if => Proc.new { !User.current.logged? }
   menu.push :register, :new_user_registration_path, :if => Proc.new { !User.current.logged? && Setting.self_registration? }
   menu.push :my_account, '/my/account', :if => Proc.new { User.current.logged? }
-  menu.push :logout, :destroy_user_session_path, :if => Proc.new { User.current.logged? }
+  menu.push :logout, :destroy_user_session_path, :html => {:method => 'delete'}, :if => Proc.new { User.current.logged? }
 end
 
 Redmine::MenuManager.map :application_menu do |menu|
@@ -238,7 +240,7 @@ Redmine::MenuManager.map :project_menu do |menu|
   menu.push :roadmap, { :controller => 'versions', :action => 'index' }, :param => :project_id,
               :if => Proc.new { |p| p.shared_versions.any? }
   menu.push :issues, { :controller => 'issues', :action => 'index' }, :param => :project_id, :caption => :label_issue_plural
-  menu.push :new_issue, { :controller => 'issues', :action => 'new' }, :param => :project_id, :caption => :label_issue_new,
+  menu.push :new_issue, { :controller => 'issues', :action => 'new', :copy_from => nil }, :param => :project_id, :caption => :label_issue_new,
               :html => { :accesskey => Redmine::AccessKeys.key_for(:new_issue) }
   menu.push :gantt, { :controller => 'gantts', :action => 'show' }, :param => :project_id, :caption => :label_gantt
   menu.push :calendar, { :controller => 'calendars', :action => 'show' }, :param => :project_id, :caption => :label_calendar

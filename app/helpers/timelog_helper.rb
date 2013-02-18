@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -56,10 +56,10 @@ module TimelogHelper
   end
 
   def select_hours(data, criteria, value)
-  	if value.to_s.empty?
-  		data.select {|row| row[criteria].blank? }
+    if value.to_s.empty?
+      data.select {|row| row[criteria].blank? }
     else
-    	data.select {|row| row[criteria].to_s == value.to_s}
+      data.select {|row| row[criteria].to_s == value.to_s}
     end
   end
 

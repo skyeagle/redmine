@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,13 +25,16 @@ class UserTest < ActiveSupport::TestCase
             :issue_categories, :enumerations, :issues,
             :journals, :journal_details,
             :groups_users,
-            :enabled_modules,
-            :workflows
+            :enabled_modules
 
   def setup
     @admin = User.find(1)
     @jsmith = User.find(2)
     @dlopper = User.find(3)
+  end
+
+  def test_sorted_scope_should_sort_user_by_display_name
+    assert_equal User.all.map(&:name).map(&:downcase).sort, User.sorted.all.map(&:name).map(&:downcase)
   end
 
   def test_generate
@@ -778,7 +781,7 @@ class UserTest < ActiveSupport::TestCase
       should "authorize nearly everything for admin users" do
         project = Project.find(1)
         assert ! @admin.member_of?(project)
-        %w(edit_issues delete_issues manage_news manage_documents manage_wiki).each do |p|
+        %w(edit_issues delete_issues manage_news add_documents manage_wiki).each do |p|
           assert_equal true, @admin.allowed_to?(p.to_sym, project)
         end
       end
@@ -891,9 +894,15 @@ class UserTest < ActiveSupport::TestCase
         assert ! @user.notify_about?(@issue)
       end
     end
+  end
 
-    context "other events" do
-      should 'be added and tested'
+  def test_notify_about_news
+    user = User.generate!
+    news = News.new
+
+    User::MAIL_NOTIFICATION_OPTIONS.map(&:first).each do |option|
+      user.mail_notification = option
+      assert_equal (option != 'none'), user.notify_about?(news)
     end
   end
 
