@@ -1,7 +1,7 @@
 source 'http://rubygems.org'
 
-gem 'rails', :github => 'rails/rails', :branch => '3-2-stable'
-gem 'devise', :github => 'plataformatec/devise'
+gem 'rails', '3.2.12'
+gem 'devise', '2.2.3'
 gem 'devise-encryptable'
 gem "jquery-rails", "~> 2.0.2"
 gem "i18n", "~> 0.6.0"
