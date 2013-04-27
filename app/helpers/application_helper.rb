@@ -343,7 +343,7 @@ module ApplicationHelper
   def options_for_membership_project_select(principal, projects)
     options = content_tag('option', "--- #{l(:actionview_instancetag_blank_option)} ---")
     options << project_tree_options_for_select(projects) do |p|
-      {:disabled => principal.projects.include?(p)}
+      {:disabled => principal.projects.to_a.include?(p)}
     end
     options
   end
@@ -758,7 +758,7 @@ module ApplicationHelper
                 if repository && (changeset = Changeset.visible.where("repository_id = ? AND scmid LIKE ?", repository.id, "#{name}%").first)
                   link = link_to h("#{project_prefix}#{repo_prefix}#{name}"), {:only_path => only_path, :controller => 'repositories', :action => 'revision', :id => project, :repository_id => repository.identifier_param, :rev => changeset.identifier},
                                                :class => 'changeset',
-                                               :title => truncate_single_line(h(changeset.comments), :length => 100)
+                                               :title => truncate_single_line(changeset.comments, :length => 100)
                 end
               else
                 if repository && User.current.allowed_to?(:browse_repository, project)
@@ -1076,7 +1076,7 @@ module ApplicationHelper
                    "var datepickerOptions={dateFormat: 'yy-mm-dd', firstDay: #{start_of_week}, " +
                      "showOn: 'button', buttonImageOnly: true, buttonImage: '" +
                      path_to_image('/images/calendar.png') +
-                     "', showButtonPanel: true, showWeek: true, showOtherMonths: true, selectOtherMonths: true};")
+                     "', showButtonPanel: true, showWeek: true, showOtherMonths: true, selectOtherMonths: true, changeMonth: true, changeYear: true};")
         jquery_locale = l('jquery.locale', :default => current_language.to_s)
         unless jquery_locale == 'en'
           tags << javascript_include_tag("i18n/jquery.ui.datepicker-#{jquery_locale}.js")
@@ -1180,7 +1180,7 @@ module ApplicationHelper
 
   def sanitize_anchor_name(anchor)
     if ''.respond_to?(:encoding) || RUBY_PLATFORM == 'java'
-      anchor.gsub(%r{[^\p{Word}\s\-]}, '').gsub(%r{\s+(\-+\s*)?}, '-')
+      anchor.gsub(%r{[^\s\-\p{Word}]}, '').gsub(%r{\s+(\-+\s*)?}, '-')
     else
       # TODO: remove when ruby1.8 is no longer supported
       anchor.gsub(%r{[^\w\s\-]}, '').gsub(%r{\s+(\-+\s*)?}, '-')

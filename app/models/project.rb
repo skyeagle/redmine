@@ -33,8 +33,6 @@ class Project < ActiveRecord::Base
   has_many :member_principals, :class_name => 'Member',
                                :include => :principal,
                                :conditions => "#{Principal.table_name}.type='Group' OR (#{Principal.table_name}.type='User' AND #{Principal.table_name}.status=#{Principal::STATUS_ACTIVE})"
-  has_many :users, :through => :members
-  has_many :principals, :through => :member_principals, :source => :principal
 
   has_many :enabled_modules, :dependent => :delete_all
   has_and_belongs_to_many :trackers, :order => "#{Tracker.table_name}.position"
@@ -215,6 +213,14 @@ class Project < ActiveRecord::Base
     end
   end
 
+  def principals
+    @principals ||= Principal.active.joins(:members).where("#{Member.table_name}.project_id = ?", id).uniq
+  end
+
+  def users
+    @users ||= User.active.joins(:members).where("#{Member.table_name}.project_id = ?", id).uniq
+  end
+
   # Returns the Systemwide and project specific activities
   def activities(include_inactive=false)
     if include_inactive
@@ -285,7 +291,10 @@ class Project < ActiveRecord::Base
     self.find(*args)
   end
 
+  alias :base_reload :reload
   def reload(*args)
+    @principals = nil
+    @users = nil
     @shared_versions = nil
     @rolled_up_versions = nil
     @rolled_up_trackers = nil
@@ -297,7 +306,7 @@ class Project < ActiveRecord::Base
     @actions_allowed = nil
     @start_date = nil
     @due_date = nil
-    super
+    base_reload(*args)
   end
 
   def to_param

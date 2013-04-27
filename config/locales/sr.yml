@@ -162,7 +162,7 @@ sr:
   notice_not_authorized: Нисте овлашћени за приступ овој страни.
   notice_email_sent: "E-порука је послата на %{value}"
   notice_email_error: "Догодила се грешка приликом слања е-поруке (%{value})"
-  notice_feeds_access_key_reseted: Ваш RSS приступни кључ је поништен.
+  notice_feeds_access_key_reseted: Ваш Atom приступни кључ је поништен.
   notice_api_access_key_reseted: Ваш API приступни кључ је поништен.
   notice_failed_to_save_issues: "Неуспешно снимање %{count} проблема од %{total} одабраних: %{ids}."
   notice_failed_to_save_members: "Неуспешно снимање члана(ова): %{errors}."
@@ -702,9 +702,9 @@ sr:
   label_language_based: Базирано на језику корисника
   label_sort_by: "Сортирано по %{value}"
   label_send_test_email: Слање пробне е-поруке
-  label_feeds_access_key: RSS приступни кључ
-  label_missing_feeds_access_key: RSS приступни кључ недостаје
-  label_feeds_access_key_created_on: "RSS приступни кључ је направљен пре %{value}"
+  label_feeds_access_key: Atom приступни кључ
+  label_missing_feeds_access_key: Atom приступни кључ недостаје
+  label_feeds_access_key_created_on: "Atom приступни кључ је направљен пре %{value}"
   label_module_plural: Модули
   label_added_time_by: "Додао %{author} пре %{age}"
   label_updated_time_by: "Ажурирао %{author} пре %{age}"
@@ -926,7 +926,6 @@ sr:
   label_principal_search: "Search for user or group:"
   label_user_search: "Search for user:"
   field_visible: Visible
-  setting_emails_header: Emails header
   setting_commit_logtime_activity_id: Activity for logged time
   text_time_logged_by_changeset: Applied in changeset %{value}.
   setting_commit_logtime_enabled: Enable time logging
@@ -967,8 +966,6 @@ sr:
   text_scm_command: Command
   text_scm_command_version: Version
   label_git_report_last_commit: Report last commit for files and directories
-  text_scm_config: You can configure your scm commands in config/configuration.yml. Please restart the application after editing it.
-  text_scm_command_not_available: Scm command is not available. Please check settings on the administration panel.
   notice_issue_successful_create: Issue %{id} created.
   label_between: between
   setting_issue_group_assignment: Allow issue assignment to groups
@@ -1086,3 +1083,9 @@ sr:
   setting_jsonp_enabled: Enable JSONP support
   field_inherit_members: Inherit members
   field_closed_on: Closed
+  field_generate_password: Generate password
+  setting_default_projects_tracker_ids: Default trackers for new projects
+  label_total_time: Укупно
+  text_scm_config: You can configure your SCM commands in config/configuration.yml. Please restart the application after editing it.
+  text_scm_command_not_available: SCM command is not available. Please check settings on the administration panel.
+  setting_emails_header: Email header

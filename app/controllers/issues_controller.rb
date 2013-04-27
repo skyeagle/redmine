@@ -85,8 +85,8 @@ class IssuesController < ApplicationController
           Issue.load_visible_relations(@issues) if include_in_api_response?('relations')
         }
         format.atom { render_feed(@issues, :title => "#{@project || Setting.app_title}: #{l(:label_issue_plural)}") }
-        format.csv  { send_data(issues_to_csv(@issues, @project, @query, params), :type => 'text/csv; header=present', :filename => 'export.csv') }
-        format.pdf  { send_data(issues_to_pdf(@issues, @project, @query), :type => 'application/pdf', :filename => 'export.pdf') }
+        format.csv  { send_data(query_to_csv(@issues, @query, params), :type => 'text/csv; header=present', :filename => 'issues.csv') }
+        format.pdf  { send_data(issues_to_pdf(@issues, @project, @query), :type => 'application/pdf', :filename => 'issues.pdf') }
       end
     else
       respond_to do |format|
@@ -113,6 +113,8 @@ class IssuesController < ApplicationController
     @edit_allowed = User.current.allowed_to?(:edit_issues, @project)
     @priorities = IssuePriority.active
     @time_entry = TimeEntry.new(:issue => @issue, :project => @issue.project)
+    @relation = IssueRelation.new
+
     respond_to do |format|
       format.html {
         retrieve_previous_and_next_issue_ids
@@ -270,6 +272,7 @@ class IssuesController < ApplicationController
       if issue.save
         moved_issues << issue
       else
+        logger.info "issue could not be updated or copied: #{issue.errors.full_messages}" if logger && logger.info
         # Keep unsaved issue ids to display them in flash error
         unsaved_issue_ids << issue.id
       end

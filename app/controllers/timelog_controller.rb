@@ -39,6 +39,7 @@ class TimelogController < ApplicationController
   helper :custom_fields
   include CustomFieldsHelper
   helper :queries
+  include QueriesHelper
 
   def index
     @query = TimeEntryQuery.build_from_params(params, :project => @project, :name => '_')
@@ -86,7 +87,7 @@ class TimelogController < ApplicationController
           :include => [:project, :activity, :user, {:issue => [:tracker, :assigned_to, :priority]}],
           :order => sort_clause
         )
-        send_data(entries_to_csv(@entries), :type => 'text/csv; header=present', :filename => 'timelog.csv')
+        send_data(query_to_csv(@entries, @query, params), :type => 'text/csv; header=present', :filename => 'timelog.csv')
       }
     end
   end
@@ -197,6 +198,7 @@ class TimelogController < ApplicationController
       time_entry.safe_attributes = attributes
       call_hook(:controller_time_entries_bulk_edit_before_save, { :params => params, :time_entry => time_entry })
       unless time_entry.save
+        logger.info "time entry could not be updated: #{time_entry.errors.full_messages}" if logger && logger.info
         # Keep unsaved time_entry ids to display them in flash error
         unsaved_time_entry_ids << time_entry.id
       end

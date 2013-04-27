@@ -33,10 +33,6 @@ class ApplicationController < ActionController::Base
   layout 'base'
 
   protect_from_forgery
-  def handle_unverified_request
-    super
-    cookies.delete(:autologin)
-  end
 
   before_filter :user_setup, :check_if_login_required, :set_localization
 

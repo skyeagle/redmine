@@ -1,6 +1,6 @@
-source 'http://rubygems.org'
+source 'https://rubygems.org'
 
-gem 'rails', :github => 'rails/rails', :branch => '3-2-stable'
+gem "rails", "3.2.13"
 gem 'devise', :github => 'plataformatec/devise'
 gem 'devise-encryptable'
 gem "jquery-rails", "~> 2.0.2"
@@ -39,6 +39,7 @@ end
 # Include database gems for the adapters found in the database
 # configuration file
 require 'erb'
+require 'yaml'
 database_file = File.join(File.dirname(__FILE__), "config/database.yml")
 if File.exist?(database_file)
   database_config = YAML::load(ERB.new(IO.read(database_file)).result)
@@ -46,9 +47,11 @@ if File.exist?(database_file)
   if adapters.any?
     adapters.each do |adapter|
       case adapter
-      when /mysql/
-        gem "mysql", "~> 2.8.1", :platforms => [:mri_18, :mingw_18]
-        gem "mysql2", "~> 0.3.11", :platforms => [:mri_19, :mingw_19]
+      when 'mysql2'
+        gem "mysql2", "~> 0.3.11", :platforms => [:mri, :mingw]
+        gem "activerecord-jdbcmysql-adapter", :platforms => :jruby
+      when 'mysql'
+        gem "mysql", "~> 2.8.1", :platforms => [:mri, :mingw]
         gem "activerecord-jdbcmysql-adapter", :platforms => :jruby
       when /postgresql/
         gem "pg", ">= 0.11.0", :platforms => [:mri, :mingw]
@@ -81,7 +84,7 @@ end
 
 group :test do
   gem "shoulda", "~> 3.3.2"
-  gem "mocha", "~> 0.13"
+  gem "mocha", "~> 0.13.3"
   gem 'capybara', '~> 2.0.0'
 end
 

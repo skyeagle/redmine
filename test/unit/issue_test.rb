@@ -849,6 +849,49 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal copy.author, child_copy.author
   end
 
+  def test_copy_as_a_child_of_copied_issue_should_not_copy_itself
+    parent = Issue.generate!
+    child1 = Issue.generate!(:parent_issue_id => parent.id, :subject => 'Child 1')
+    child2 = Issue.generate!(:parent_issue_id => parent.id, :subject => 'Child 2')
+
+    copy = parent.reload.copy
+    copy.parent_issue_id = parent.id
+    copy.author = User.find(7)
+    assert_difference 'Issue.count', 3 do
+      assert copy.save
+    end
+    parent.reload
+    copy.reload
+    assert_equal parent, copy.parent
+    assert_equal 3, parent.children.count
+    assert_equal 5, parent.descendants.count
+    assert_equal 2, copy.children.count
+    assert_equal 2, copy.descendants.count
+  end
+
+  def test_copy_as_a_descendant_of_copied_issue_should_not_copy_itself
+    parent = Issue.generate!
+    child1 = Issue.generate!(:parent_issue_id => parent.id, :subject => 'Child 1')
+    child2 = Issue.generate!(:parent_issue_id => parent.id, :subject => 'Child 2')
+
+    copy = parent.reload.copy
+    copy.parent_issue_id = child1.id
+    copy.author = User.find(7)
+    assert_difference 'Issue.count', 3 do
+      assert copy.save
+    end
+    parent.reload
+    child1.reload
+    copy.reload
+    assert_equal child1, copy.parent
+    assert_equal 2, parent.children.count
+    assert_equal 5, parent.descendants.count
+    assert_equal 1, child1.children.count
+    assert_equal 3, child1.descendants.count
+    assert_equal 2, copy.children.count
+    assert_equal 2, copy.descendants.count
+  end
+
   def test_copy_should_copy_subtasks_to_target_project
     issue = Issue.generate_with_descendants!
 
@@ -1411,6 +1454,7 @@ class IssueTest < ActiveSupport::TestCase
                           :relation_type => IssueRelation::TYPE_PRECEDES)
     assert_equal Date.parse('2012-10-18'), issue2.reload.start_date
 
+    issue1.reload
     issue1.due_date = '2012-10-23'
     issue1.save!
     issue2.reload
@@ -1425,6 +1469,7 @@ class IssueTest < ActiveSupport::TestCase
                           :relation_type => IssueRelation::TYPE_PRECEDES)
     assert_equal Date.parse('2012-10-18'), issue2.reload.start_date
 
+    issue1.reload
     issue1.start_date = '2012-09-17'
     issue1.due_date = '2012-09-18'
     issue1.save!
@@ -1443,6 +1488,7 @@ class IssueTest < ActiveSupport::TestCase
                           :relation_type => IssueRelation::TYPE_PRECEDES)
     assert_equal Date.parse('2012-10-18'), issue2.reload.start_date
 
+    issue1.reload
     issue1.start_date = '2012-09-17'
     issue1.due_date = '2012-09-18'
     issue1.save!
@@ -1464,6 +1510,55 @@ class IssueTest < ActiveSupport::TestCase
       end
       assert_equal date, stale.reload.start_date
     end
+  end
+
+  def test_child_issue_should_consider_parent_soonest_start_on_create
+    set_language_if_valid 'en'
+    issue1 = Issue.generate!(:start_date => '2012-10-15', :due_date => '2012-10-17')
+    issue2 = Issue.generate!(:start_date => '2012-10-18', :due_date => '2012-10-20')
+    IssueRelation.create!(:issue_from => issue1, :issue_to => issue2,
+                          :relation_type => IssueRelation::TYPE_PRECEDES)
+    issue1.reload
+    issue2.reload
+    assert_equal Date.parse('2012-10-18'), issue2.start_date
+
+    child = Issue.new(:parent_issue_id => issue2.id, :start_date => '2012-10-16',
+      :project_id => 1, :tracker_id => 1, :status_id => 1, :subject => 'Child', :author_id => 1)
+    assert !child.valid?
+    assert_include 'Start date is invalid', child.errors.full_messages
+    assert_equal Date.parse('2012-10-18'), child.soonest_start
+    child.start_date = '2012-10-18'
+    assert child.save
+  end
+
+  def test_setting_parent_to_a_dependent_issue_should_not_validate
+    set_language_if_valid 'en'
+    issue1 = Issue.generate!
+    issue2 = Issue.generate!
+    issue3 = Issue.generate!
+    IssueRelation.create!(:issue_from => issue1, :issue_to => issue2, :relation_type => IssueRelation::TYPE_PRECEDES)
+    IssueRelation.create!(:issue_from => issue3, :issue_to => issue1, :relation_type => IssueRelation::TYPE_PRECEDES)
+    issue3.reload
+    issue3.parent_issue_id = issue2.id
+    assert !issue3.valid?
+    assert_include 'Parent task is invalid', issue3.errors.full_messages
+  end
+
+  def test_setting_parent_should_not_allow_circular_dependency
+    set_language_if_valid 'en'
+    issue1 = Issue.generate!
+    issue2 = Issue.generate!
+    IssueRelation.create!(:issue_from => issue1, :issue_to => issue2, :relation_type => IssueRelation::TYPE_PRECEDES)
+    issue3 = Issue.generate!
+    issue2.reload
+    issue2.parent_issue_id = issue3.id
+    issue2.save!
+    issue4 = Issue.generate!
+    IssueRelation.create!(:issue_from => issue3, :issue_to => issue4, :relation_type => IssueRelation::TYPE_PRECEDES)
+    issue4.reload
+    issue4.parent_issue_id = issue1.id
+    assert !issue4.valid?
+    assert_include 'Parent task is invalid', issue4.errors.full_messages
   end
 
   def test_overdue
@@ -1789,42 +1884,42 @@ class IssueTest < ActiveSupport::TestCase
   test "#by_tracker" do
     User.current = User.anonymous
     groups = Issue.by_tracker(Project.find(1))
-    assert_equal 3, groups.size
+    assert_equal 3, groups.count
     assert_equal 7, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_version" do
     User.current = User.anonymous
     groups = Issue.by_version(Project.find(1))
-    assert_equal 3, groups.size
+    assert_equal 3, groups.count
     assert_equal 3, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_priority" do
     User.current = User.anonymous
     groups = Issue.by_priority(Project.find(1))
-    assert_equal 4, groups.size
+    assert_equal 4, groups.count
     assert_equal 7, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_category" do
     User.current = User.anonymous
     groups = Issue.by_category(Project.find(1))
-    assert_equal 2, groups.size
+    assert_equal 2, groups.count
     assert_equal 3, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_assigned_to" do
     User.current = User.anonymous
     groups = Issue.by_assigned_to(Project.find(1))
-    assert_equal 2, groups.size
+    assert_equal 2, groups.count
     assert_equal 2, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_author" do
     User.current = User.anonymous
     groups = Issue.by_author(Project.find(1))
-    assert_equal 4, groups.size
+    assert_equal 4, groups.count
     assert_equal 7, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
@@ -1832,7 +1927,7 @@ class IssueTest < ActiveSupport::TestCase
     User.current = User.anonymous
     groups = Issue.by_subproject(Project.find(1))
     # Private descendant not visible
-    assert_equal 1, groups.size
+    assert_equal 1, groups.count
     assert_equal 2, groups.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
@@ -1908,6 +2003,12 @@ class IssueTest < ActiveSupport::TestCase
 
   def test_journals_after_with_blank_arg_should_return_all_journals
     assert_equal [Journal.find(1), Journal.find(2)], Issue.find(1).journals_after('')
+  end
+
+  def test_css_classes_should_include_tracker
+    issue = Issue.new(:tracker => Tracker.find(2))
+    classes = issue.css_classes.split(' ')
+    assert_include 'tracker-2', classes
   end
 
   def test_css_classes_should_include_priority

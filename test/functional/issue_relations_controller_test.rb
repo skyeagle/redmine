@@ -28,7 +28,8 @@ class IssueRelationsControllerTest < ActionController::TestCase
            :issue_relations,
            :enabled_modules,
            :enumerations,
-           :trackers
+           :trackers,
+           :projects_trackers
 
   def setup
     sign_out(:user)
@@ -87,6 +88,17 @@ class IssueRelationsControllerTest < ActionController::TestCase
     end
   end
 
+  def test_create_follows_relation_should_update_relations_list
+    issue1 = Issue.generate!(:subject => 'Followed issue', :start_date => Date.yesterday, :due_date => Date.today)
+    issue2 = Issue.generate!
+
+    assert_difference 'IssueRelation.count' do
+      xhr :post, :create, :issue_id => issue2.id,
+                 :relation => {:issue_to_id => issue1.id, :relation_type => 'follows', :delay => ''}
+    end
+    assert_match /Followed issue/, response.body
+  end
+
   def test_should_create_relations_with_visible_issues_only
     Setting.cross_project_issue_relations = '1'
     assert_nil Issue.visible(User.find(3)).find_by_id(4)
@@ -96,8 +108,6 @@ class IssueRelationsControllerTest < ActionController::TestCase
                  :relation => {:issue_to_id => '4', :relation_type => 'relates', :delay => ''}
     end
   end
-
-  should "prevent relation creation when there's a circular dependency"
 
   def test_create_xhr_with_failure
     assert_no_difference 'IssueRelation.count' do
