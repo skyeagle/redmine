@@ -70,7 +70,7 @@ class AccountTest < ActionController::IntegrationTest
     get '/my/page'
     assert_response :success
     assert_template 'my/page'
-    assert_equal [user.id], @request.session['warden.user.user.key'][1]
+    assert_equal [user.id], @request.session['warden.user.user.key'][0]
     assert_not_nil user.reload.last_sign_in_at
   end
 
@@ -331,6 +331,5 @@ class AccountTest < ActionController::IntegrationTest
       assert_equal 'Could not authenticate you from OpenID because "Connection failed".', flash[:alert]
     end
   end
-
 
 end

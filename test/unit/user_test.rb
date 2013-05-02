@@ -70,6 +70,41 @@ class UserTest < ActiveSupport::TestCase
     assert user.save
   end
 
+  def test_generate_password_should_respect_minimum_password_length
+    with_settings :password_min_length => 15 do
+      user = User.generate!(:generate_password => true)
+      assert user.password.length >= 15
+    end
+  end
+
+  def test_generate_password_should_not_generate_password_with_less_than_10_characters
+    with_settings :password_min_length => 4 do
+      user = User.generate!(:generate_password => true)
+      assert user.password.length >= 10
+    end
+  end
+
+  def test_generate_password_on_create_should_set_password
+    user = User.new(:firstname => "new", :lastname => "user", :email => "newuser@somenet.foo")
+    user.login = "newuser"
+    user.generate_password = true
+    assert user.save
+
+    password = user.password
+    assert user.valid_password?(password)
+  end
+
+  def test_generate_password_on_update_should_update_password
+    user = User.find(2)
+    hash = user.encrypted_password
+    user.generate_password = true
+    assert user.save
+
+    password = user.password
+    assert user.valid_password?(password)
+    assert_not_equal hash, user.reload.encrypted_password
+  end
+
   def test_create
     user = User.new(:firstname => "new", :lastname => "user", :email => "newuser@somenet.foo")
 
@@ -625,6 +660,32 @@ class UserTest < ActiveSupport::TestCase
     user.destroy
 
     assert_equal true, User.default_admin_account_changed?
+  end
+
+  def test_membership_with_project_should_return_membership
+    project = Project.find(1)
+
+    membership = @jsmith.membership(project)
+    assert_kind_of Member, membership
+    assert_equal @jsmith, membership.user
+    assert_equal project, membership.project
+  end
+
+  def test_membership_with_project_id_should_return_membership
+    project = Project.find(1)
+
+    membership = @jsmith.membership(1)
+    assert_kind_of Member, membership
+    assert_equal @jsmith, membership.user
+    assert_equal project, membership.project
+  end
+
+  def test_membership_for_non_member_should_return_nil
+    project = Project.find(1)
+
+    user = User.generate!
+    membership = user.membership(1)
+    assert_nil membership
   end
 
   def test_roles_for_project

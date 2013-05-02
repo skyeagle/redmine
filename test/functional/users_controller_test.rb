@@ -217,6 +217,30 @@ class UsersControllerTest < ActionController::TestCase
     assert_equal '0', user.pref[:warn_on_leaving_unsaved]
   end
 
+  def test_create_with_generate_password_should_email_the_password
+    assert_difference 'User.count' do
+      post :create, :user => {
+        :login => 'randompass',
+        :firstname => 'Random',
+        :lastname => 'Pass',
+        :email => 'randompass@example.net',
+        :language => 'en',
+        :generate_password => '1',
+        :password => '',
+        :password_confirmation => ''
+      }, :send_information => 1
+    end
+    user = User.order('id DESC').first
+    assert_equal 'randompass', user.login
+
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
+    m = mail_body(mail).match(/Password: ([a-zA-Z0-9]+)/)
+    assert m
+    password = m[1]
+    assert user.valid_password?(password)
+  end
+
   def test_create_with_failure
     assert_no_difference 'User.count' do
       post :create, :user => {}
@@ -290,6 +314,37 @@ class UsersControllerTest < ActionController::TestCase
     assert_not_nil mail
     assert_equal [u.email], mail.bcc
     assert_mail_body_match 'newpass123', mail
+  end
+
+  def test_update_with_generate_password_should_email_the_password
+    ActionMailer::Base.deliveries.clear
+    Setting.bcc_recipients = '1'
+
+    put :update, :id => 2, :user => {
+      :generate_password => '1',
+      :password => '',
+      :password_confirmation => ''
+    }, :send_information => '1'
+
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
+    m = mail_body(mail).match(/Password: ([a-zA-Z0-9]+)/)
+    assert m
+    password = m[1]
+    assert User.find(2).valid_password?(password)
+  end
+
+  def test_update_without_generate_password_should_not_change_password
+    put :update, :id => 2, :user => {
+      :firstname => 'changed',
+      :generate_password => '0',
+      :password => '',
+      :password_confirmation => ''
+    }, :send_information => '1'
+
+    user = User.find(2)
+    assert_equal 'changed', user.reload.firstname
+    assert user.valid_password?('jsmith')
   end
 
   def test_update_notified_project

@@ -20,6 +20,7 @@ class IssueQuery < Query
   self.queried_class = Issue
 
   self.available_columns = [
+    QueryColumn.new(:id, :sortable => "#{Issue.table_name}.id", :default_order => 'desc', :caption => '#', :frozen => true),
     QueryColumn.new(:project, :sortable => "#{Project.table_name}.name", :groupable => true),
     QueryColumn.new(:tracker, :sortable => "#{Tracker.table_name}.position", :groupable => true),
     QueryColumn.new(:parent, :sortable => ["#{Issue.table_name}.root_id", "#{Issue.table_name}.lft ASC"], :default_order => 'desc', :caption => :field_parent_issue),
@@ -65,7 +66,7 @@ class IssueQuery < Query
     versions = []
     categories = []
     issue_custom_fields = []
-    
+
     if project
       principals += project.principals.sort
       unless project.leaf?
@@ -85,7 +86,6 @@ class IssueQuery < Query
     principals.uniq!
     principals.sort!
     users = principals.select {|p| p.is_a?(User)}
-
 
     add_available_filter "status_id",
       :type => :list_status, :values => IssueStatus.sorted.all.collect{|s| [s.name, s.id.to_s] }
@@ -214,10 +214,6 @@ class IssueQuery < Query
     }
 
     @available_columns
-  end
-
-  def sortable_columns
-    {'id' => "#{Issue.table_name}.id"}.merge(super)
   end
 
   def default_columns_names

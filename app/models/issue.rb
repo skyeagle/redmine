@@ -184,10 +184,12 @@ class Issue < ActiveRecord::Base
     super
   end
 
+  alias :base_reload :reload
   def reload(*args)
     @workflow_rule_by_attribute = nil
     @assignable_versions = nil
-    super
+    @relations = nil
+    base_reload(*args)
   end
 
   # Overrides Redmine::Acts::Customizable::InstanceMethods#available_custom_fields
@@ -574,6 +576,8 @@ class Issue < ActiveRecord::Base
     elsif @parent_issue
       if !valid_parent_project?(@parent_issue)
         errors.add :parent_issue_id, :invalid
+      elsif (@parent_issue != parent) && (all_dependent_issues.include?(@parent_issue) || @parent_issue.all_dependent_issues.include?(self))
+        errors.add :parent_issue_id, :invalid
       elsif !new_record?
         # moving an existing issue
         if @parent_issue.root_id != root_id
@@ -849,14 +853,18 @@ class Issue < ActiveRecord::Base
     IssueRelation.find(relation_id, :conditions => ["issue_to_id = ? OR issue_from_id = ?", id, id])
   end
 
+  # Returns all the other issues that depend on the issue
   def all_dependent_issues(except=[])
     except << self
     dependencies = []
-    relations_from.each do |relation|
-      if relation.issue_to && !except.include?(relation.issue_to)
-        dependencies << relation.issue_to
-        dependencies += relation.issue_to.all_dependent_issues(except)
-      end
+    dependencies += relations_from.map(&:issue_to)
+    dependencies += children unless leaf?
+    dependencies.compact!
+    dependencies -= except
+    dependencies += dependencies.map {|issue| issue.all_dependent_issues(except)}.flatten
+    if parent
+      dependencies << parent
+      dependencies += parent.all_dependent_issues(except + parent.descendants)
     end
     dependencies
   end
@@ -890,7 +898,7 @@ class Issue < ActiveRecord::Base
     @soonest_start = nil if reload
     @soonest_start ||= (
         relations_to(reload).collect{|relation| relation.successor_soonest_start} +
-        ancestors.collect(&:soonest_start)
+        [(@parent_issue || parent).try(:soonest_start)]
       ).compact.max
   end
 
@@ -953,7 +961,7 @@ class Issue < ActiveRecord::Base
 
   # Returns a string of css classes that apply to the issue
   def css_classes
-    s = "issue status-#{status_id} #{priority.try(:css_classes)}"
+    s = "issue tracker-#{tracker_id} status-#{status_id} #{priority.try(:css_classes)}"
     s << ' closed' if closed?
     s << ' overdue' if overdue?
     s << ' child' if child?
@@ -1145,20 +1153,27 @@ class Issue < ActiveRecord::Base
     end
 
     unless @copied_from.leaf? || @copy_options[:subtasks] == false
-      @copied_from.children.each do |child|
+      copy_options = (@copy_options || {}).merge(:subtasks => false)
+      copied_issue_ids = {@copied_from.id => self.id}
+      @copied_from.reload.descendants.reorder("#{Issue.table_name}.lft").each do |child|
+        # Do not copy self when copying an issue as a descendant of the copied issue
+        next if child == self
+        # Do not copy subtasks of issues that were not copied
+        next unless copied_issue_ids[child.parent_id]
+        # Do not copy subtasks that are not visible to avoid potential disclosure of private data
         unless child.visible?
-          # Do not copy subtasks that are not visible to avoid potential disclosure of private data
           logger.error "Subtask ##{child.id} was not copied during ##{@copied_from.id} copy because it is not visible to the current user" if logger
           next
         end
-        copy = Issue.new.copy_from(child, @copy_options)
+        copy = Issue.new.copy_from(child, copy_options)
         copy.author = author
         copy.project = project
-        copy.parent_issue_id = id
-        # Children subtasks are copied recursively
+        copy.parent_issue_id = copied_issue_ids[child.parent_id]
         unless copy.save
           logger.error "Could not copy subtask ##{child.id} while copying ##{@copied_from.id} to ##{id} due to validation errors: #{copy.errors.full_messages.join(', ')}" if logger
+          next
         end
+        copied_issue_ids[child.id] = copy.id
       end
     end
     @after_create_from_copy_handled = true
@@ -1169,11 +1184,10 @@ class Issue < ActiveRecord::Base
       # issue was just created
       self.root_id = (@parent_issue.nil? ? id : @parent_issue.root_id)
       set_default_left_and_right
-      Issue.update_all("root_id = #{root_id}, lft = #{lft}, rgt = #{rgt}", ["id = ?", id])
+      Issue.update_all(["root_id = ?, lft = ?, rgt = ?", root_id, lft, rgt], ["id = ?", id])
       if @parent_issue
         move_to_child_of(@parent_issue)
       end
-      reload
     elsif parent_issue_id != parent_id
       former_parent_id = parent_id
       # moving an existing issue
@@ -1184,13 +1198,12 @@ class Issue < ActiveRecord::Base
         # to another tree
         unless root?
           move_to_right_of(root)
-          reload
         end
         old_root_id = root_id
         self.root_id = (@parent_issue.nil? ? id : @parent_issue.root_id )
         target_maxright = nested_set_scope.maximum(right_column_name) || 0
         offset = target_maxright + 1 - lft
-        Issue.update_all("root_id = #{root_id}, lft = lft + #{offset}, rgt = rgt + #{offset}",
+        Issue.update_all(["root_id = ?, lft = lft + ?, rgt = rgt + ?", root_id, offset, offset],
                           ["root_id = ? AND lft >= ? AND rgt <= ? ", old_root_id, lft, rgt])
         self[left_column_name] = lft + offset
         self[right_column_name] = rgt + offset
@@ -1198,7 +1211,6 @@ class Issue < ActiveRecord::Base
           move_to_child_of(@parent_issue)
         end
       end
-      reload
       # delete invalid relations of all descendants
       self_and_descendants.each do |issue|
         issue.relations.each do |relation|

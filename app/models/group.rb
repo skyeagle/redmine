@@ -35,6 +35,7 @@ class Group < Principal
   end
 
   scope :sorted, lambda { order("#{table_name}.lastname ASC") }
+  scope :named, lambda {|arg| where("LOWER(#{table_name}.lastname) = LOWER(?)", arg.to_s.strip)}
 
   safe_attributes 'name',
     'user_ids',

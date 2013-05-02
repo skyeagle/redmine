@@ -40,14 +40,15 @@ class Version < ActiveRecord::Base
     includes(:project).where(Project.allowed_to_condition(args.first || User.current, :view_issues))
   }
 
-  safe_attributes 'name', 
+  safe_attributes 'name',
     'description',
     'effective_date',
     'due_date',
     'wiki_page_title',
     'status',
     'sharing',
-    'custom_field_values'
+    'custom_field_values',
+    'custom_fields'
 
   # Returns true if +user+ or current user is allowed to view the version
   def visible?(user=User.current)

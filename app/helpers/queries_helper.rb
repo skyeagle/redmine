@@ -29,12 +29,49 @@ module QueriesHelper
     end
   end
 
+  def query_filters_hidden_tags(query)
+    tags = ''.html_safe
+    query.filters.each do |field, options|
+      tags << hidden_field_tag("f[]", field, :id => nil)
+      tags << hidden_field_tag("op[#{field}]", options[:operator], :id => nil)
+      options[:values].each do |value|
+        tags << hidden_field_tag("v[#{field}][]", value, :id => nil)
+      end
+    end
+    tags
+  end
+
+  def query_columns_hidden_tags(query)
+    tags = ''.html_safe
+    query.columns.each do |column|
+      tags << hidden_field_tag("c[]", column.name, :id => nil)
+    end
+    tags
+  end
+
+  def query_hidden_tags(query)
+    query_filters_hidden_tags(query) + query_columns_hidden_tags(query)
+  end
+
   def available_block_columns_tags(query)
     tags = ''.html_safe
     query.available_block_columns.each do |column|
       tags << content_tag('label', check_box_tag('c[]', column.name.to_s, query.has_column?(column)) + " #{column.caption}", :class => 'inline')
     end
     tags
+  end
+
+  def query_available_inline_columns_options(query)
+    (query.available_inline_columns - query.columns).reject(&:frozen?).collect {|column| [column.caption, column.name]}
+  end
+
+  def query_selected_inline_columns_options(query)
+    (query.inline_columns & query.available_inline_columns).reject(&:frozen?).collect {|column| [column.caption, column.name]}
+  end
+
+  def render_query_columns_selection(query, options={})
+    tag_name = (options[:name] || 'c') + '[]'
+    render :partial => 'queries/columns', :locals => {:query => query, :tag_name => tag_name}
   end
 
   def column_header(column)
@@ -67,7 +104,9 @@ module QueriesHelper
     when 'Date'
       format_date(value)
     when 'Fixnum'
-      if column.name == :done_ratio
+      if column.name == :id
+        link_to value, issue_path(issue)
+      elsif column.name == :done_ratio
         progress_bar(value, :width => '80px')
       else
         value.to_s
@@ -94,6 +133,51 @@ module QueriesHelper
     else
       h(value)
     end
+  end
+
+  def csv_content(column, issue)
+    value = column.value(issue)
+    if value.is_a?(Array)
+      value.collect {|v| csv_value(column, issue, v)}.compact.join(', ')
+    else
+      csv_value(column, issue, value)
+    end
+  end
+
+  def csv_value(column, issue, value)
+    case value.class.name
+    when 'Time'
+      format_time(value)
+    when 'Date'
+      format_date(value)
+    when 'Float'
+      sprintf("%.2f", value).gsub('.', l(:general_csv_decimal_separator))
+    when 'IssueRelation'
+      other = value.other_issue(issue)
+      l(value.label_for(issue)) + " ##{other.id}"
+    else
+      value.to_s
+    end
+  end
+
+  def query_to_csv(items, query, options={})
+    encoding = l(:general_csv_encoding)
+    columns = (options[:columns] == 'all' ? query.available_inline_columns : query.inline_columns)
+    query.available_block_columns.each do |column|
+      if options[column.name].present?
+        columns << column
+      end
+    end
+
+    export = FCSV.generate(:col_sep => l(:general_csv_separator)) do |csv|
+      # csv header fields
+      csv << columns.collect {|c| Redmine::CodesetUtil.from_utf8(c.caption.to_s, encoding) }
+      # csv lines
+      items.each do |item|
+        csv << columns.collect {|c| Redmine::CodesetUtil.from_utf8(csv_content(c, item), encoding) }
+      end
+    end
+    export
   end
 
   # Retrieve query from session or build a new query

@@ -380,7 +380,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal 'text/csv; header=present', @response.content_type
     assert @response.body.starts_with?("#,")
     lines = @response.body.chomp.split("\n")
-    assert_equal assigns(:query).columns.size + 1, lines[0].split(',').size
+    assert_equal assigns(:query).columns.size, lines[0].split(',').size
   end
 
   def test_index_csv_with_project
@@ -391,13 +391,18 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_index_csv_with_description
-    get :index, :format => 'csv', :description => '1'
-    assert_response :success
-    assert_not_nil assigns(:issues)
-    assert_equal 'text/csv; header=present', @response.content_type
-    assert @response.body.starts_with?("#,")
-    lines = @response.body.chomp.split("\n")
-    assert_equal assigns(:query).columns.size + 2, lines[0].split(',').size
+    Issue.generate!(:description => 'test_index_csv_with_description')
+
+    with_settings :default_language => 'en' do
+      get :index, :format => 'csv', :description => '1'
+      assert_response :success
+      assert_not_nil assigns(:issues)
+    end
+
+    assert_equal 'text/csv; header=present', response.content_type
+    headers = response.body.chomp.split("\n").first.split(',')
+    assert_include 'Description', headers
+    assert_include 'test_index_csv_with_description', response.body
   end
 
   def test_index_csv_with_spent_time_column
@@ -416,9 +421,9 @@ class IssuesControllerTest < ActionController::TestCase
     assert_response :success
     assert_not_nil assigns(:issues)
     assert_equal 'text/csv; header=present', @response.content_type
-    assert @response.body.starts_with?("#,")
-    lines = @response.body.chomp.split("\n")
-    assert_equal assigns(:query).available_inline_columns.size + 1, lines[0].split(',').size
+    assert_match /\A#,/, response.body
+    lines = response.body.chomp.split("\n")
+    assert_equal assigns(:query).available_inline_columns.size, lines[0].split(',').size
   end
 
   def test_index_csv_with_multi_column_field
@@ -431,6 +436,25 @@ class IssuesControllerTest < ActionController::TestCase
     assert_response :success
     lines = @response.body.chomp.split("\n")
     assert lines.detect {|line| line.include?('"MySQL, Oracle"')}
+  end
+
+  def test_index_csv_should_format_float_custom_fields_with_csv_decimal_separator
+    field = IssueCustomField.create!(:name => 'Float', :is_for_all => true, :tracker_ids => [1], :field_format => 'float')
+    issue = Issue.generate!(:project_id => 1, :tracker_id => 1, :custom_field_values => {field.id => '185.6'})
+
+    with_settings :default_language => 'fr' do
+      get :index, :format => 'csv', :columns => 'all'
+      assert_response :success
+      issue_line = response.body.chomp.split("\n").map {|line| line.split(';')}.detect {|line| line[0]==issue.id.to_s}
+      assert_include '185,60', issue_line
+    end
+
+    with_settings :default_language => 'en' do
+      get :index, :format => 'csv', :columns => 'all'
+      assert_response :success
+      issue_line = response.body.chomp.split("\n").map {|line| line.split(',')}.detect {|line| line[0]==issue.id.to_s}
+      assert_include '185.60', issue_line
+    end
   end
 
   def test_index_csv_big_5
@@ -453,8 +477,8 @@ class IssuesControllerTest < ActionController::TestCase
       if str_utf8.respond_to?(:force_encoding)
         s1.force_encoding('Big5')
       end
-      assert lines[0].include?(s1)
-      assert lines[1].include?(str_big5)
+      assert_include s1, lines[0]
+      assert_include str_big5, lines[1]
     end
   end
 
@@ -689,12 +713,12 @@ class IssuesControllerTest < ActionController::TestCase
     # query should use specified columns
     query = assigns(:query)
     assert_kind_of IssueQuery, query
-    assert_equal [:project, :tracker, :subject, :assigned_to], query.columns.map(&:name)
+    assert_equal [:id, :project, :tracker, :subject, :assigned_to], query.columns.map(&:name)
   end
 
   def test_index_without_project_and_explicit_default_columns_should_not_add_project_column
     Setting.issue_list_default_columns = ['tracker', 'subject', 'assigned_to']
-    columns = ['tracker', 'subject', 'assigned_to']
+    columns = ['id', 'tracker', 'subject', 'assigned_to']
     get :index, :set_filter => 1, :c => columns
 
     # query should use specified columns
@@ -3451,7 +3475,9 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_bulk_update_parent_id
+    IssueRelation.delete_all
     sign_in users(:users_002)
+
     post :bulk_update, :ids => [1, 3],
       :notes => 'Bulk editing parent',
       :issue => {:priority_id => '', :assigned_to_id => '', :status_id => '', :parent_issue_id => '2'}
