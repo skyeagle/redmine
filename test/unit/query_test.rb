@@ -29,8 +29,35 @@ class QueryTest < ActiveSupport::TestCase
            :custom_fields_trackers
 
   def test_available_filters_should_be_ordered
+    set_language_if_valid 'en'
     query = IssueQuery.new
     assert_equal 0, query.available_filters.keys.index('status_id')
+    expected_order = [
+      "Status",
+      "Project",
+      "Tracker",
+      "Priority"
+    ]
+    assert_equal expected_order,
+                 (query.available_filters.values.map{|v| v[:name]} & expected_order)
+  end
+
+  def test_available_filters_with_custom_fields_should_be_ordered
+    set_language_if_valid 'en'
+    UserCustomField.create!(
+              :name => 'order test', :field_format => 'string',
+              :is_for_all => true, :is_filter => true
+            )
+    query = IssueQuery.new
+    expected_order = [
+      "Searchable field",
+      "Database",
+      "Project's Development status",
+      "Author's order test",
+      "Assignee's order test"
+    ]
+    assert_equal expected_order,
+                 (query.available_filters.values.map{|v| v[:name]} & expected_order)
   end
 
   def test_custom_fields_for_all_projects_should_be_available_in_global_queries
@@ -335,6 +362,20 @@ class QueryTest < ActiveSupport::TestCase
     query.add_filter("cf_#{f.id}", '<=', ['30'])
     assert_match /CAST.+ <= 30\.0/, query.statement
     find_issues_with_query(query)
+  end
+
+  def test_operator_lesser_than_on_date_custom_field
+    f = IssueCustomField.create!(:name => 'filter', :field_format => 'date', :is_filter => true, :is_for_all => true)
+    CustomValue.create!(:custom_field => f, :customized => Issue.find(1), :value => '2013-04-11')
+    CustomValue.create!(:custom_field => f, :customized => Issue.find(2), :value => '2013-05-14')
+    CustomValue.create!(:custom_field => f, :customized => Issue.find(3), :value => '')
+
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    query.add_filter("cf_#{f.id}", '<=', ['2013-05-01'])
+    issue_ids = find_issues_with_query(query).map(&:id)
+    assert_include 1, issue_ids
+    assert_not_include 2, issue_ids
+    assert_not_include 3, issue_ids
   end
 
   def test_operator_between

@@ -20,21 +20,19 @@ require File.expand_path('../../../test_helper', __FILE__)
 class PatchesTest < ActiveSupport::TestCase
   include Redmine::I18n
 
-  context "ActiveRecord::Base.human_attribute_name" do
-    setup do
-      Setting.default_language = 'en'
-    end
+  def setup
+    Setting.default_language = 'en'
+  end
 
-    should "transform name to field_name" do
-      assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at')
-    end
+  test "ActiveRecord::Base.human_attribute_name should transform name to field_name" do
+    assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at')
+  end
 
-    should "cut extra _id suffix for better validation" do
-      assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at_id')
-    end
+  test "ActiveRecord::Base.human_attribute_name should cut extra _id suffix for better validation" do
+    assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at_id')
+  end
 
-    should "default to humanized value if no translation has been found (useful for custom fields)" do
-      assert_equal 'Patch name', ActiveRecord::Base.human_attribute_name('Patch name')
-    end
+  test "ActiveRecord::Base.human_attribute_name should default to humanized value if no translation has been found (useful for custom fields)" do
+    assert_equal 'Patch name', ActiveRecord::Base.human_attribute_name('Patch name')
   end
 end

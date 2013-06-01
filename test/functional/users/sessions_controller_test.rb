@@ -68,7 +68,7 @@ class Users::SessionsControllerTest < ActionController::TestCase
 
     user = users(:users_002)
     sign_in user
-    assert_equal [2], @request.session['warden.user.user.key'][0]
+    assert @request.session['warden.user.user.key'].include?([user.id])
     get :destroy
     assert_redirected_to '/'
     assert_nil @request.session['warden.user.user.key']

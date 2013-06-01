@@ -499,6 +499,13 @@ class MailHandlerTest < ActiveSupport::TestCase
     assert_equal 'd8e8fca2dc0f896fd7cb4cb0031ba249', attachment.digest
   end
 
+  def test_multiple_text_parts
+    issue = submit_email('multiple_text_parts.eml', :issue => {:project => 'ecookbook'})
+    assert_include 'first', issue.description
+    assert_include 'second', issue.description
+    assert_include 'third', issue.description
+  end
+
   def test_add_issue_with_iso_8859_1_subject
     issue = submit_email(
               'subject_as_iso-8859-1.eml',
@@ -803,6 +810,19 @@ class MailHandlerTest < ActiveSupport::TestCase
     str2.force_encoding('UTF-8') if str2.respond_to?(:force_encoding)
     assert_equal str1, user.firstname
     assert_equal str2, user.lastname
+  end
+
+  def test_extract_options_from_env_should_return_options
+    options = MailHandler.extract_options_from_env({
+      'tracker' => 'defect',
+      'project' => 'foo',
+      'unknown_user' => 'create'
+    })
+
+    assert_equal({
+      :issue => {:tracker => 'defect', :project => 'foo'},
+      :unknown_user => 'create'
+    }, options)
   end
 
   private

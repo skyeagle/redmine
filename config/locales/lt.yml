@@ -253,7 +253,6 @@ lt:
   error_unable_delete_issue_status: 'Negalima ištrinti darbo statuso'
   error_unable_to_connect: Negalima prisijungti (%{value})
   error_attachment_too_big: "Ši byla negali būti įkelta, nes viršija maksimalią (%{max_size}) leistiną bylos apimtį"
-  error_attachment_too_big: "This file cannot be uploaded because it exceeds the maximum allowed file size (%{max_size})"
   warning_attachments_not_saved: "%{count} byla(-ų) negali būti išsaugota."
 
   mail_subject_lost_password: "Jūsų %{value} slaptažodis"
@@ -603,7 +602,7 @@ lt:
   label_no_data: Nėra ką atvaizduoti
   label_change_status: Pakeitimo būsena
   label_history: Istorija
-  label_attachment: Filas
+  label_attachment: Failas
   label_attachment_new: Naujas failas
   label_attachment_delete: Pašalinkite failą
   label_attachment_plural: Failai
@@ -1143,7 +1142,7 @@ lt:
   setting_jsonp_enabled: Įgalinti JSONP palaikymą
   field_inherit_members: Paveldėti narius
   field_closed_on: Uždarytas
-  field_generate_password: Generate password
+  field_generate_password: Sugeneruoti slaptažodį
   setting_default_projects_tracker_ids: Sekliai pagal nutylėjimą naujiems projektams
   label_total_time: Iš viso
   text_scm_config: Jūs galite pakeisti SCM komandas byloje config/configuration.yml. Prašome perkrauti programą po redagavimo, idant įgalinti pakeitimus.

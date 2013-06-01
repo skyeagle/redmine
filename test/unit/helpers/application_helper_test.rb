@@ -20,6 +20,7 @@
 require File.expand_path('../../../test_helper', __FILE__)
 
 class ApplicationHelperTest < ActionView::TestCase
+  include Redmine::I18n
   include ERB::Util
   include Rails.application.routes.url_helpers
 
@@ -33,26 +34,30 @@ class ApplicationHelperTest < ActionView::TestCase
   def setup
     super
     set_tmp_attachments_directory
+    @russian_test = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82"
+    if @russian_test.respond_to?(:force_encoding)
+      @russian_test.force_encoding('UTF-8')
+    end
   end
 
-  context "#link_to_if_authorized" do
-    context "authorized user" do
-      should "be tested"
-    end
+  test "#link_to_if_authorized for authorized user should allow using the :controller and :action for the target link" do
+    User.current = User.find_by_login('admin')
 
-    context "unauthorized user" do
-      should "be tested"
-    end
+    @project = Issue.first.project # Used by helper
+    response = link_to_if_authorized('By controller/actionr',
+                                    {:controller => 'issues', :action => 'edit', :id => Issue.first.id})
+    assert_match /href/, response
+  end
 
-    should "allow using the :controller and :action for the target link" do
-      User.current = User.find_by_login('admin')
+  test "#link_to_if_authorized for unauthorized user should display nothing if user isn't authorized" do
+    User.current = User.find_by_login('dlopper')
+    @project = Project.find('private-child')
+    issue = @project.issues.first
+    assert !issue.visible?
 
-      @project = Issue.first.project # Used by helper
-      response = link_to_if_authorized("By controller/action",
-                                       {:controller => 'issues', :action => 'edit', :id => Issue.first.id})
-      assert_match /href/, response
-    end
-
+    response = link_to_if_authorized('Never displayed',
+                                    {:controller => 'issues', :action => 'show', :id => issue})
+    assert_nil response
   end
 
   def test_auto_links
@@ -96,7 +101,8 @@ class ApplicationHelperTest < ActionView::TestCase
   if 'ruby'.respond_to?(:encoding)
     def test_auto_links_with_non_ascii_characters
       to_test = {
-        'http://foo.bar/тест' => '<a class="external" href="http://foo.bar/тест">http://foo.bar/тест</a>'
+        "http://foo.bar/#{@russian_test}" =>
+          %|<a class="external" href="http://foo.bar/#{@russian_test}">http://foo.bar/#{@russian_test}</a>|
       }
       to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text) }
     end
@@ -250,7 +256,8 @@ RAW
   if 'ruby'.respond_to?(:encoding)
     def test_textile_external_links_with_non_ascii_characters
       to_test = {
-        'This is a "link":http://foo.bar/тест' => 'This is a <a href="http://foo.bar/тест" class="external">link</a>'
+        %|This is a "link":http://foo.bar/#{@russian_test}| =>
+          %|This is a <a href="http://foo.bar/#{@russian_test}" class="external">link</a>|
       }
       to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text) }
     end
@@ -586,6 +593,7 @@ RAW
   end
 
   def test_wiki_links
+    russian_eacape = CGI.escape(@russian_test)
     to_test = {
       '[[CookBook documentation]]' => '<a href="/projects/ecookbook/wiki/CookBook_documentation" class="wiki-page">CookBook documentation</a>',
       '[[Another page|Page]]' => '<a href="/projects/ecookbook/wiki/Another_page" class="wiki-page">Page</a>',
@@ -596,7 +604,8 @@ RAW
       '[[CookBook documentation#One-section]]' => '<a href="/projects/ecookbook/wiki/CookBook_documentation#One-section" class="wiki-page">CookBook documentation</a>',
       '[[Another page#anchor|Page]]' => '<a href="/projects/ecookbook/wiki/Another_page#anchor" class="wiki-page">Page</a>',
       # UTF8 anchor
-      '[[Another_page#Тест|Тест]]' => %|<a href="/projects/ecookbook/wiki/Another_page##{CGI.escape 'Тест'}" class="wiki-page">Тест</a>|,
+      "[[Another_page##{@russian_test}|#{@russian_test}]]" =>
+         %|<a href="/projects/ecookbook/wiki/Another_page##{russian_eacape}" class="wiki-page">#{@russian_test}</a>|,
       # page that doesn't exist
       '[[Unknown page]]' => '<a href="/projects/ecookbook/wiki/Unknown_page" class="wiki-page new">Unknown page</a>',
       '[[Unknown page|404]]' => '<a href="/projects/ecookbook/wiki/Unknown_page" class="wiki-page new">404</a>',
@@ -1209,5 +1218,15 @@ RAW
 
   def test_javascript_include_tag_for_plugin_should_pick_the_plugin_javascript
     assert_match 'src="/plugin_assets/foo/javascripts/scripts.js"', javascript_include_tag("scripts", :plugin => :foo)
+  end
+
+  def test_raw_json_should_escape_closing_tags
+    s = raw_json(["<foo>bar</foo>"])
+    assert_equal '["<foo>bar<\/foo>"]', s
+  end
+
+  def test_raw_json_should_be_html_safe
+    s = raw_json(["foo"])
+    assert s.html_safe?
   end
 end

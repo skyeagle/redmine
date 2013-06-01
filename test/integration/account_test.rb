@@ -70,7 +70,7 @@ class AccountTest < ActionController::IntegrationTest
     get '/my/page'
     assert_response :success
     assert_template 'my/page'
-    assert_equal [user.id], @request.session['warden.user.user.key'][0]
+    assert @request.session['warden.user.user.key'].include?([user.id])
     assert_not_nil user.reload.last_sign_in_at
   end
 

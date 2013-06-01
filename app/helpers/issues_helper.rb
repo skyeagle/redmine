@@ -94,6 +94,20 @@ module IssuesHelper
     s.html_safe
   end
 
+  # Returns an array of error messages for bulk edited issues
+  def bulk_edit_error_messages(issues)
+    messages = {}
+    issues.each do |issue|
+      issue.errors.full_messages.each do |message|
+        messages[message] ||= []
+        messages[message] << issue
+      end
+    end
+    messages.map { |message, issues|
+      "#{message}: " + issues.map {|i| "##{i.id}"}.join(', ')
+    }
+ end
+
   # Returns a link for adding a new subtask to the given issue
   def link_to_new_subtask(issue)
     attrs = {
@@ -292,6 +306,17 @@ module IssuesHelper
       end
     when 'attachment'
       label = l(:label_attachment)
+    when 'relation'
+      if detail.value && !detail.old_value
+        rel_issue = Issue.find_by_id(detail.value)
+        value = rel_issue.nil? ? "#{l(:label_issue)} #{detail.value}" :
+                  (no_html ? rel_issue : link_to_issue(rel_issue))
+      elsif detail.old_value && !detail.value
+        rel_issue = Issue.find_by_id(detail.old_value)
+        old_value = rel_issue.nil? ? "#{l(:label_issue)} #{detail.old_value}" :
+                          (no_html ? rel_issue : link_to_issue(rel_issue))
+      end
+      label = l(detail.prop_key.to_sym)
     end
     call_hook(:helper_issues_show_detail_after_setting,
               {:detail => detail, :label => label, :value => value, :old_value => old_value })
@@ -303,7 +328,9 @@ module IssuesHelper
     unless no_html
       label = content_tag('strong', label)
       old_value = content_tag("i", h(old_value)) if detail.old_value
-      old_value = content_tag("del", old_value) if detail.old_value and detail.value.blank?
+      if detail.old_value && detail.value.blank? && detail.property != 'relation'
+        old_value = content_tag("del", old_value)
+      end
       if detail.property == 'attachment' && !value.blank? && atta = Attachment.find_by_id(detail.prop_key)
         # Link to the attachment if it has not been removed
         value = link_to_attachment(atta, :download => true, :only_path => options[:only_path])
@@ -339,7 +366,7 @@ module IssuesHelper
         else
           l(:text_journal_set_to, :label => label, :value => value).html_safe
         end
-      when 'attachment'
+      when 'attachment', 'relation'
         l(:text_journal_added, :label => label, :value => value).html_safe
       end
     else

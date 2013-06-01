@@ -84,8 +84,11 @@ end
 
 group :test do
   gem "shoulda", "~> 3.3.2"
-  gem "mocha", "~> 0.13.3"
-  gem 'capybara', '~> 2.0.0'
+  gem "mocha", ">= 0.14", :require => 'mocha/api'
+  if RUBY_VERSION >= '1.9.3'
+    gem "capybara", "~> 2.1.0"
+    gem "selenium-webdriver"
+  end
 end
 
 local_gemfile = File.join(File.dirname(__FILE__), "Gemfile.local")
@@ -97,5 +100,6 @@ end
 # Load plugins' Gemfiles
 Dir.glob File.expand_path("../plugins/*/Gemfile", __FILE__) do |file|
   puts "Loading #{file} ..." if $DEBUG # `ruby -d` or `bundle -v`
-  instance_eval File.read(file)
+  #TODO: switch to "eval_gemfile file" when bundler >= 1.2.0 will be required (rails 4)
+  instance_eval File.read(file), file
 end

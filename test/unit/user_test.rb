@@ -398,26 +398,23 @@ class UserTest < ActiveSupport::TestCase
     assert_not_nil u.errors[:mail_notification]
   end
 
-  context "User#find_first_by_auth_conditions" do
-    should "fall-back to case-insensitive if user login is not found as-typed." do
-      user = User.find_first_by_auth_conditions(:login => "AdMin")
-      assert_kind_of User, user
-      assert_equal "admin", user.login
+  test "User#find_first_by_auth_conditions should fall-back to case-insensitive if user login is not found as-typed." do
+    user = User.find_first_by_auth_conditions(:login => "AdMin")
+    assert_kind_of User, user
+    assert_equal "admin", user.login
+  end
+
+  test "User#find_first_by_auth_conditions should select the exact matching user first" do
+    case_sensitive_user = User.generate! do |user|
+      user.password = "admin123"
     end
+    # bypass validations to make it appear like existing data
+    case_sensitive_user.login = 'ADMIN'
+    case_sensitive_user.save(:validate => false)
 
-    should "select the exact matching user first" do
-      case_sensitive_user = User.generate! do |user|
-        user.password = "admin123"
-      end
-      # bypass validations to make it appear like existing data
-      case_sensitive_user.login = 'ADMIN'
-      case_sensitive_user.save(:validate => false)
-
-      user = User.find_first_by_auth_conditions(:login => "ADMIN")
-      assert_kind_of User, user
-      assert_equal "ADMIN", user.login
-
-    end
+    user = User.find_first_by_auth_conditions(:login => "ADMIN")
+    assert_kind_of User, user
+    assert_equal "ADMIN", user.login
   end
 
   def test_password
@@ -523,23 +520,17 @@ class UserTest < ActiveSupport::TestCase
     assert_equal nil, user
   end
 
-  context "authentication" do
-    context "with good credentials" do
-      should "return the user" do
-        user = User.find_first_by_auth_conditions(:login => "admin")
-        assert_kind_of User, user
-        assert user.valid_password?('admin')
-        assert_equal "admin", user.login
-      end
-    end
+  test ".find_first_by_auth_conditions with good credentials should return the user" do
+    user = User.find_first_by_auth_conditions(:login => "admin")
+    assert_kind_of User, user
+    assert user.valid_password?('admin')
+    assert_equal "admin", user.login
+  end
 
-    context "with wrong credentials" do
-      should "return nil" do
-        user = User.find_first_by_auth_conditions(:login => "admin")
-        assert_kind_of User, user
-        assert !user.valid_password?('foo')
-      end
-    end
+  test ".find_first_by_auth_conditions with wrong credentials should return nil" do
+    user = User.find_first_by_auth_conditions(:login => "admin")
+    assert_kind_of User, user
+    assert !user.valid_password?('foo')
   end
 
   def test_create_anonymous
@@ -585,50 +576,46 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  context "User#api_key" do
-    should "generate a new one if the user doesn't have one" do
-      user = User.generate!(:api_token => nil)
-      assert_nil user.api_token
+  test "#api_key should generate a new one if the user doesn't have one" do
+    user = User.generate!(:api_token => nil)
+    assert_nil user.api_token
 
-      key = user.api_key
-      assert_equal 40, key.length
-      user.reload
-      assert_equal key, user.api_key
-    end
-
-    should "return the existing api token value" do
-      user = User.generate!
-      token = Token.create!(:action => 'api')
-      user.api_token = token
-      assert user.save
-
-      assert_equal token.value, user.api_key
-    end
+    key = user.api_key
+    assert_equal 40, key.length
+    user.reload
+    assert_equal key, user.api_key
   end
 
-  context "User#find_by_api_key" do
-    should "return nil if no matching key is found" do
-      assert_nil User.find_by_api_key('zzzzzzzzz')
-    end
+  test "#api_key should return the existing api token value" do
+    user = User.generate!
+    token = Token.create!(:action => 'api')
+    user.api_token = token
+    assert user.save
 
-    should "return nil if the key is found for an inactive user" do
-      user = User.generate!
-      user.status = User::STATUS_LOCKED
-      token = Token.create!(:action => 'api')
-      user.api_token = token
-      user.save
+    assert_equal token.value, user.api_key
+  end
 
-      assert_nil User.find_by_api_key(token.value)
-    end
+  test "#find_by_api_key should return nil if no matching key is found" do
+    assert_nil User.find_by_api_key('zzzzzzzzz')
+  end
 
-    should "return the user if the key is found for an active user" do
-      user = User.generate! {|u| u.activate}
-      token = Token.create!(:action => 'api')
-      user.api_token = token
-      user.save
+  test "#find_by_api_key should return nil if the key is found for an inactive user" do
+    user = User.generate!
+    user.status = User::STATUS_LOCKED
+    token = Token.create!(:action => 'api')
+    user.api_token = token
+    user.save
 
-      assert_equal user, User.find_by_api_key(token.value)
-    end
+    assert_nil User.find_by_api_key(token.value)
+  end
+
+  test "#find_by_api_key should return user if the key is found for an active user" do
+    user = User.generate! {|u| u.activate}
+    token = Token.create!(:action => 'api')
+    user.api_token = token
+    user.save
+
+    assert_equal user, User.find_by_api_key(token.value)
   end
 
   def test_default_admin_account_changed_should_return_false_if_account_was_not_changed

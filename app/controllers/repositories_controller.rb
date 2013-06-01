@@ -111,7 +111,7 @@ class RepositoriesController < ApplicationController
   end
 
   def show
-    @repository.fetch_changesets if Setting.autofetch_changesets? && @path.empty?
+    @repository.fetch_changesets if @project.active? && Setting.autofetch_changesets? && @path.empty?
 
     @entries = @repository.entries(@path, @rev)
     @changeset = @repository.find_changeset_by_name(@rev)
@@ -411,7 +411,7 @@ class RepositoriesController < ApplicationController
     fields = fields.collect {|c| c.gsub(%r{<.+@.+>}, '') }
 
     graph = SVG::Graph::BarHorizontal.new(
-      :height => 15 * commits_data.length,
+      :height => 30 * commits_data.length,
       :width => 800,
       :fields => fields,
       :stack => :side,

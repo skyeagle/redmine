@@ -72,7 +72,7 @@ class JournalsControllerTest < ActionController::TestCase
   def test_reply_to_issue_without_permission
     sign_in users(:users_007)
     xhr :get, :new, :id => 6
-    assert_response 401
+    assert_response 403
   end
 
   def test_reply_to_note

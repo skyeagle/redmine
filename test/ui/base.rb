@@ -23,7 +23,7 @@ Capybara.register_driver :selenium do |app|
   # Use the following driver definition to test locally using Chrome (also requires chromedriver to be in PATH)
   # Capybara::Selenium::Driver.new(app, :browser => :chrome)
   # Add :switches => %w[--lang=en] to force default browser locale to English
-  # Default for Selenium remote driver is to connect to local host on port 4444 
+  # Default for Selenium remote driver is to connect to local host on port 4444
   # This can be change using :url => 'http://localhost:9195' if necessary
   # PhantomJS 1.8 now directly supports Webdriver Wire API, simply run it with `phantomjs --webdriver 4444`
   # Add :desired_capabilities => Selenium::WebDriver::Remote::Capabilities.internet_explorer) to run on Selenium Grid Hub with IE
@@ -41,14 +41,17 @@ module Redmine
       # uses a separate server thread, which the transactions would be hidden
       self.use_transactional_fixtures = false
 
+      # default: 2
+      Capybara.default_wait_time = 4
+
       # Should not depend on locale since Redmine displays login page
       # using default browser locale which depend on system locale for "real" browsers drivers
       def log_user(login, password)
         visit '/my/page'
-        assert_equal '/login', current_path
+        assert_equal '/users/sign_in', current_path
         within('#login-form form') do
-          fill_in 'username', :with => login
-          fill_in 'password', :with => password
+          fill_in "user[login]", :with => login
+          fill_in "user[password]", :with => password
           find('input[name=login]').click
         end
         assert_equal '/my/page', current_path

@@ -32,7 +32,7 @@ class SessionStartTest < ActionController::TestCase
 
     post :create, :user => { :login => user.login, :password => user.login }
     assert_response 302
-    assert_equal [user.id], request.session['warden.user.user.key'][0]
+    assert request.session['warden.user.user.key'].include?([user.id])
     user.reload
     assert_not_equal last_sign_in_at, user.last_sign_in_at
     assert_not_nil user.current_sign_in_at

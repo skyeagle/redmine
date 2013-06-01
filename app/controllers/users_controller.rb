@@ -91,11 +91,13 @@ class UsersController < ApplicationController
     @user.activate
     @user.skip_confirmation!
 
+    if @user.password && @user.password_confirmation.nil? && api_request?
+      @user.password_confirmation = @user.password
+    end
+
     if @user.save
       @user.pref.attributes = params[:pref]
-      @user.pref[:no_self_notified] = (params[:no_self_notified] == '1')
       @user.pref.save
-      @user.notified_project_ids = (@user.mail_notification == 'selected' ? params[:notified_project_ids] : [])
 
       Mailer.account_information(@user, @user.password).deliver if params[:send_information]
 
@@ -135,11 +137,9 @@ class UsersController < ApplicationController
 
     # TODO: Similar to My#account
     @user.pref.attributes = params[:pref]
-    @user.pref[:no_self_notified] = (params[:no_self_notified] == '1')
 
     if @user.save
       @user.pref.save
-      @user.notified_project_ids = (@user.mail_notification == 'selected' ? params[:notified_project_ids] : [])
 
       if was_activated
         Mailer.account_activated(@user).deliver

@@ -215,14 +215,14 @@ class MailerTest < ActiveSupport::TestCase
     # Remove members except news author
     news.project.memberships.each {|m| m.destroy unless m.user == user}
 
-    user.pref[:no_self_notified] = false
+    user.pref.no_self_notified = false
     user.pref.save
     User.current = user
     Mailer.news_added(news.reload).deliver
     assert_equal 1, last_email.bcc.size
 
     # nobody to notify
-    user.pref[:no_self_notified] = true
+    user.pref.no_self_notified = true
     user.pref.save
     User.current = user
     ActionMailer::Base.deliveries.clear
@@ -296,7 +296,7 @@ class MailerTest < ActiveSupport::TestCase
     issue = Issue.find(1)
     user = User.find(9)
     # minimal email notification options
-    user.pref[:no_self_notified] = '1'
+    user.pref.no_self_notified = '1'
     user.pref.save
     user.mail_notification = false
     user.save
@@ -359,6 +359,17 @@ class MailerTest < ActiveSupport::TestCase
     Role.non_member.remove_permission! :view_private_notes
     Mailer.issue_edit(journal).deliver
     assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+  end
+
+  def test_issue_edit_should_mark_private_notes
+    journal = Journal.find(2)
+    journal.private_notes = true
+    journal.save!
+
+    with_settings :default_language => 'en' do
+      Mailer.issue_edit(journal).deliver
+    end
+    assert_mail_body_match '(Private notes)', last_email
   end
 
   def test_document_added

@@ -241,7 +241,9 @@ class IssuesController < ApplicationController
     end
 
     @safe_attributes = @issues.map(&:safe_attribute_names).reduce(:&)
-    render :layout => false if request.xhr?
+
+    @issue_params = params[:issue] || {}
+    @issue_params[:custom_field_values] ||= {}
   end
 
   def bulk_update
@@ -249,8 +251,8 @@ class IssuesController < ApplicationController
     @copy = params[:copy].present?
     attributes = parse_params_for_bulk_issue_attributes(params)
 
-    unsaved_issue_ids = []
-    moved_issues = []
+    unsaved_issues = []
+    saved_issues = []
 
     if @copy && params[:copy_subtasks].present?
       # Descendant issues will be copied with the parent task
@@ -258,35 +260,43 @@ class IssuesController < ApplicationController
       @issues.reject! {|issue| @issues.detect {|other| issue.is_descendant_of?(other)}}
     end
 
-    @issues.each do |issue|
-      issue.reload
+    @issues.each do |orig_issue|
+      orig_issue.reload
       if @copy
-        issue = issue.copy({},
+        issue = orig_issue.copy({},
           :attachments => params[:copy_attachments].present?,
           :subtasks => params[:copy_subtasks].present?
         )
+      else
+        issue = orig_issue
       end
       journal = issue.init_journal(User.current, params[:notes])
       issue.safe_attributes = attributes
       call_hook(:controller_issues_bulk_edit_before_save, { :params => params, :issue => issue })
       if issue.save
-        moved_issues << issue
+        saved_issues << issue
       else
-        logger.info "issue could not be updated or copied: #{issue.errors.full_messages}" if logger && logger.info
-        # Keep unsaved issue ids to display them in flash error
-        unsaved_issue_ids << issue.id
+        unsaved_issues << orig_issue
       end
     end
-    set_flash_from_bulk_issue_save(@issues, unsaved_issue_ids)
 
-    if params[:follow]
-      if @issues.size == 1 && moved_issues.size == 1
-        redirect_to issue_path(moved_issues.first)
-      elsif moved_issues.map(&:project).uniq.size == 1
-        redirect_to project_issues_path(moved_issues.map(&:project).first)
+    if unsaved_issues.empty?
+      flash[:notice] = l(:notice_successful_update) unless saved_issues.empty?
+      if params[:follow]
+        if @issues.size == 1 && saved_issues.size == 1
+          redirect_to issue_path(saved_issues.first)
+        elsif saved_issues.map(&:project).uniq.size == 1
+          redirect_to project_issues_path(saved_issues.map(&:project).first)
+        end
+      else
+        redirect_back_or_default _project_issues_path(@project)
       end
     else
-      redirect_back_or_default _project_issues_path(@project)
+      @saved_issues = @issues
+      @unsaved_issues = unsaved_issues
+      @issues = Issue.visible.find_all_by_id(@unsaved_issues.map(&:id))
+      bulk_edit
+      render :action => 'bulk_edit'
     end
   end
 
