@@ -30,5 +30,5 @@ RedmineApp::Application.configure do
 
   config.active_support.deprecation = :log
 
-  config.threadsafe!
+  config.threadsafe! if $rails_rake_task
 end
