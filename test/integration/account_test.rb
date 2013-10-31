@@ -83,9 +83,10 @@ class AccountTest < ActionController::IntegrationTest
     post "/users/password", :user => { :login => 'jSmith@somenet.foo' }
     assert_redirected_to "/users/sign_in"
 
-    user = User.find_first_by_auth_conditions(:login => 'jsmith@somenet.foo')
-    token = user.reset_password_token
-    assert user.reset_password_period_valid?
+    token = nil
+    assert_select_email do
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+    end
 
     get "/users/password/edit", :reset_password_token => token
     assert_response :success
@@ -102,8 +103,8 @@ class AccountTest < ActionController::IntegrationTest
     assert_redirected_to "/my/page"
     assert_equal 'Your password was changed successfully. You are now signed in.', flash[:notice]
 
-    user.reload
-    assert_nil user.reset_password_token
+    user = User.find_first_by_auth_conditions(:login => 'jsmith@somenet.foo')
+    assert_equal token, user.reset_password_token
   end
 
   def test_register_with_automatic_activation
@@ -178,7 +179,12 @@ class AccountTest < ActionController::IntegrationTest
     assert_equal 'newuser@foo.bar', user.email
     assert !user.send(:confirmation_period_valid?)
 
-    get 'users/confirmation', :confirmation_token => user.confirmation_token
+    token = nil
+    assert_select_email do
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+    end
+
+    get 'users/confirmation', :confirmation_token => token
     assert_redirected_to '/my/page'
     user.reload
     assert user.active?

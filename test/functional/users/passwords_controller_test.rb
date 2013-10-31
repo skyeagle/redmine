@@ -41,12 +41,13 @@ class Users::PasswordsControllerTest < ActionController::TestCase
       assert_redirected_to new_user_session_path
     end
 
-    token = User.find(2).reset_password_token
-    assert token.present?
-
+    user = User.find(2)
+    token = nil
     assert_select_email do
-      assert_select "a[href=?]", "https://redmine.foo/users/password/edit?reset_password_token=#{token}"
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
     end
+    reset_token = Devise.token_generator.digest(user.class, :reset_password_token, token)
+    assert_equal reset_token, user.reset_password_token
   end
 
   def test_lost_password_for_unknown_user_should_fail
@@ -67,11 +68,16 @@ class Users::PasswordsControllerTest < ActionController::TestCase
     user = User.find(2)
     user.send_reset_password_instructions
 
-    get :edit, :reset_password_token => user.reset_password_token
+    token = nil
+    assert_select_email do
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+    end
+
+    get :edit, :reset_password_token => token
     assert_response :success
     assert_template :edit
 
-    assert_select "input[type=hidden][name='user[reset_password_token]'][value=?]", user.reset_password_token
+    assert_select "input[type=hidden][name='user[reset_password_token]'][value=?]", token
   end
 
   def test_get_lost_password_with_invalid_token_should_render_edit_password_form
@@ -84,15 +90,20 @@ class Users::PasswordsControllerTest < ActionController::TestCase
     user = User.find(2)
     user.send_reset_password_instructions
 
+    token = nil
+    assert_select_email do
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+    end
+
     put :update, :user => {
-      :reset_password_token => user.reset_password_token,
+      :reset_password_token => token,
       :password => 'newpass123',
       :password_confirmation => 'newpass123'
     }
     assert_redirected_to user_root_path
     user.reload
     assert user.valid_password?('newpass123')
-    assert_nil user.reset_password_token
+    assert_equal token, user.reset_password_token
   end
 
   def test_post_lost_password_with_token_for_non_active_user_should_fail
@@ -100,8 +111,13 @@ class Users::PasswordsControllerTest < ActionController::TestCase
     user.lock!
     user.send_reset_password_instructions
 
+    token = nil
+    assert_select_email do
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+    end
+
     put :update, :user => {
-      :reset_password_token => user.reset_password_token,
+      :reset_password_token => token,
       :password => 'newpass123',
       :password_confirmation => 'newpass123'
     }
@@ -114,18 +130,24 @@ class Users::PasswordsControllerTest < ActionController::TestCase
   def test_post_lost_password_with_token_and_password_confirmation_failure_should_redisplay_the_form
     user = User.find(2)
     user.send_reset_password_instructions
+    old_token = user.reset_password_token
+
+    token = nil
+    assert_select_email do
+      token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+    end
 
     put :update, :user => {
-      :reset_password_token => user.reset_password_token,
+      :reset_password_token => token,
       :password => 'newpass',
       :password_confirmation => 'wrongpass'
     }
 
     assert_response :success
     assert_template :edit
-    assert_not_nil user.reset_password_token, "The reset_password_token was reset"
+    assert_equal user.reset_password_token, old_token, "The reset_password_token was reset"
 
-    assert_select "input[type=hidden][name='user[reset_password_token]'][value=?]", user.reset_password_token
+    assert_select "input[type=hidden][name='user[reset_password_token]'][value=?]", token
   end
 
   def test_post_lost_password_with_invalid_token_should_render

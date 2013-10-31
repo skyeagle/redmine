@@ -275,12 +275,14 @@ class Mailer < ActionMailer::Base
       :subject => l(:mail_subject_register, Setting.app_title)
   end
 
-  def confirmation_instructions(record, opts={})
+  def confirmation_instructions(record, token, opts={})
+    @token = token
     set_language_if_valid(record.language)
     devise_mail(record, :confirmation_instructions)
   end
 
-  def reset_password_instructions(record, opts={})
+  def reset_password_instructions(record, token, opts={})
+    @token = token
     set_language_if_valid(record.language)
     devise_mail(record, :reset_password_instructions)
   end

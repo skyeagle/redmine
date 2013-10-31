@@ -303,7 +303,9 @@ class MailHandlerTest < ActiveSupport::TestCase
       login = email.bcc[0].match(/^#{Regexp.escape(issue.author.email)}$/)[0]
       assert_equal issue.author.email, login
 
-      confirm_code = email.body.encoded.match(/#{Regexp.escape(issue.author.confirmation_token)}/m)[0]
+      token = email.html_part.body.match(/confirmation_token\=(.+)"/)[1]
+
+      confirm_code = Devise.token_generator.digest(issue.author.class, :confirmation_token, token)
       assert_equal issue.author.confirmation_token, confirm_code
 
       assert_equal issue.author, User.find_first_by_auth_conditions(:login => login)

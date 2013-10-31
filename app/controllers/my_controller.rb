@@ -154,4 +154,13 @@ class MyController < ApplicationController
     end
     render :nothing => true
   end
+
+  def user_params
+    params.require(:user).permit(
+      :custom_values,
+      :firstname,
+      :language,
+      :lastname
+    )
+  end
 end

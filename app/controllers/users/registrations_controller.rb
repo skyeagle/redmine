@@ -4,9 +4,9 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   # POST /resource
   def create
-    build_resource
+    build_resource(sign_up_params)
     resource.language = Setting.default_language
-    resource.login = params[:user][:login]
+    resource.login = sign_up_params['login']
 
     # Skip confirmation by email when it should be manual by admin or automatic
     resource.skip_confirmation! if [2,3].include?(Setting.self_registration.to_i)

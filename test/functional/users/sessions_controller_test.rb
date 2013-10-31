@@ -51,7 +51,7 @@ class Users::SessionsControllerTest < ActionController::TestCase
     assert_template :new
 
     assert_select 'div.flash.alert', :text => /Invalid login\/email or password/
-    assert_select "input[name='user[login]'][value=admin]"
+    assert_select "input[name='user[login]']"
     assert_select "input[name='user[password]']"
     assert_select 'input[name=password][value]', 0
   end

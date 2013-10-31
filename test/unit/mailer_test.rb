@@ -475,37 +475,42 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_lost_password
     user = users(:users_002)
-    user.send(:generate_reset_password_token!)
     Setting.host_name = 'redmine.foo'
     Setting.protocol = 'https'
 
+    token = user.send_reset_password_instructions
+    reset_token = Devise.token_generator.digest(user.class, :reset_password_token, token)
+    assert_equal reset_token, user.reset_password_token
+
     valid_languages.each do |lang|
       user.update_attribute :language, lang.to_s
-      assert Mailer.reset_password_instructions(user).deliver
-      mail = last_email
+      assert Mailer.reset_password_instructions(user, token).deliver
       assert_select_email do
         assert_select "a[href=?]",
-                      "https://redmine.foo/users/password/edit?reset_password_token=#{user.reset_password_token}",
-                      :text => "https://redmine.foo/users/password/edit?reset_password_token=#{user.reset_password_token}"
+                      "https://redmine.foo/users/password/edit?reset_password_token=#{token}",
+                      :text => "https://redmine.foo/users/password/edit?reset_password_token=#{token}"
       end
     end
   end
 
   def test_register
     user = users(:users_002)
-    user.send(:generate_confirmation_token!)
     Setting.host_name = 'redmine.foo'
     Setting.protocol = 'https'
+
+    user.send_confirmation_instructions
+    token = user.instance_variable_get(:@raw_confirmation_token)
+    confirm_token = Devise.token_generator.digest(user.class, :confirmation_token, token)
+    assert_equal confirm_token, user.confirmation_token
 
     valid_languages.each do |lang|
       user.update_attribute :language, lang.to_s
       ActionMailer::Base.deliveries.clear
-      assert Mailer.confirmation_instructions(user).deliver
-      mail = last_email
+      assert Mailer.confirmation_instructions(user, token).deliver
       assert_select_email do
         assert_select "a[href=?]",
-                      "https://redmine.foo/users/confirmation?confirmation_token=#{user.confirmation_token}",
-                      :text => "https://redmine.foo/users/confirmation?confirmation_token=#{user.confirmation_token}"
+                      "https://redmine.foo/users/confirmation?confirmation_token=#{token}",
+                      :text => "https://redmine.foo/users/confirmation?confirmation_token=#{token}"
       end
     end
   end

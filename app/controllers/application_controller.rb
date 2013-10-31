@@ -500,4 +500,14 @@ class ApplicationController < ActionController::Base
   def registration_disabled?
     Setting.self_registration == '0'
   end
+
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.for(:sign_in) { |u| u.permit(:login) }
+    devise_parameter_sanitizer.for(:sign_up) do |u|
+      u.permit(:login, :firstname, :lastname, :password, :password_confirmation, :language)
+    end
+    devise_parameter_sanitizer.for(:account_update) do |u|
+      u.permit(:password, :password_confirmation, :current_password)
+    end
+  end
 end

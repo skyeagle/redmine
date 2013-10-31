@@ -209,3 +209,7 @@ production:
 # specific configuration options for development environment
 # that overrides the default ones
 development:
+
+test:
+  devise:
+    secret_key: '080b44e3c2e1dbb989cbdb0b8f19ac6ffa4df789ac0b20c0c48f5d594fd420de97ebb8d78de30861dad2ded02ad6a4ebfad45c10fac6950fa257c5732461ecf4'
