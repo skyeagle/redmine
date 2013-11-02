@@ -259,7 +259,7 @@ en:
   field_parent: Subproject of
   field_is_in_roadmap: Issues displayed in roadmap
   field_login: Login
-  field_login_or_email: Login or email
+  field_login_or_email: Login or E-mail
   field_mail_notification: Email notifications
   field_admin: Administrator
   field_last_sign_in_at: Last connection

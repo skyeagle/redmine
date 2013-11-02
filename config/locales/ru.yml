@@ -349,6 +349,7 @@ ru:
   field_last_sign_in_at: Последнее подключение
   field_lastname: Фамилия
   field_login: Пользователь
+  field_login_or_email: Логин или E-mail
   field_mail: Email
   field_mail_notification: Уведомления по email
   field_max_length: Максимальная длина
