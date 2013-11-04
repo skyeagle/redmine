@@ -180,8 +180,8 @@ class User < Principal
     end
   end
 
-  def self.find_first_by_auth_conditions(params_conditions)
-    conditions = params_conditions.dup
+  def self.find_first_by_auth_conditions(tainted_conditions, opts = {})
+    conditions = devise_parameter_filter.filter(tainted_conditions).merge(opts)
     if login = conditions.delete(:login)
       users = active.where(["login = :value", { :value => login }])
       if users.present? && user = users.detect {|u| u.login == login}
