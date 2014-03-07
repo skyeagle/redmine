@@ -148,6 +148,7 @@ class MyControllerTest < ActionController::TestCase
   end
 
   def test_reset_rss_key_without_existing_key
+    Token.delete_all
     assert_nil User.find(2).rss_token
     post :reset_rss_key
 

@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem "rails", "3.2.13"
-gem 'devise', github: 'plataformatec/devise', branch: 'v3.1'
+gem 'devise', '3.2.3'
 gem 'devise-encryptable'
 gem "jquery-rails", "~> 2.0.2"
 gem "i18n", "~> 0.6.0"
@@ -74,12 +74,13 @@ else
 end
 
 group :development, :test do
-  gem "parallel_tests", github: 'grosser/parallel_tests'
+  gem "parallel_tests"
 end
 
 group :development do
   gem "rdoc", ">= 2.4.2"
   gem "yard"
+  gem "spring"
 end
 
 group :test do

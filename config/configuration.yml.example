@@ -80,6 +80,8 @@
 
 # default configuration options for all environments
 default:
+  devise:
+    secret_key: 'should-be-changed-below-for-production-environment'
   # Outgoing emails configuration (see examples above)
   email_delivery:
     delivery_method: :smtp
@@ -205,6 +207,8 @@ default:
 # specific configuration options for production environment
 # that overrides the default ones
 production:
+  devise:
+    secret_key: 'change-me-in-production-please'
 
 # specific configuration options for development environment
 # that overrides the default ones

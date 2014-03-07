@@ -57,7 +57,7 @@ class Users::SessionsControllerTest < ActionController::TestCase
   end
 
   def test_login_should_reset_session
-    @controller.expects(:expire_session_data_after_sign_in!).once
+    @controller.expects(:expire_data_after_sign_in!).once
 
     post :create, :user => { :login => 'jsmith', :password => 'jsmith' }
     assert_response 302

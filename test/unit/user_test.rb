@@ -552,6 +552,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_rss_key
+    Token.delete_all
     assert_nil @jsmith.rss_token
     key = @jsmith.rss_key
     assert_equal 40, key.length
@@ -561,6 +562,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_rss_key_should_not_be_generated_twice
+    Token.delete_all
     assert_difference 'Token.count', 1 do
       key1 = @jsmith.rss_key
       key2 = @jsmith.rss_key

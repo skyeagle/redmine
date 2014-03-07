@@ -21,6 +21,7 @@ class Users::PasswordsControllerTest < ActionController::TestCase
   fixtures :users, :roles
 
   def setup
+    ActionMailer::Base.deliveries.clear
     @request.env["devise.mapping"] = Devise.mappings[:user]
     User.current = nil
   end
