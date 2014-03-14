@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,9 +34,22 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
-  before_filter :user_setup, :check_if_login_required, :set_localization
+  def verify_authenticity_token
+    unless api_request?
+      super
+    end
+  end
 
-  rescue_from ActionController::InvalidAuthenticityToken, :with => :invalid_authenticity_token
+  def handle_unverified_request
+    unless api_request?
+      super
+      cookies.delete(:remember_user_token)
+      render_error :status => 422, :message => "Invalid form authenticity token."
+    end
+  end
+
+  before_filter :user_setup, :check_if_login_required, :check_password_change, :set_localization
+
   rescue_from ::Unauthorized, :with => :deny_access
   rescue_from ::ActionView::MissingTemplate, :with => :missing_template
 
@@ -56,7 +69,6 @@ class ApplicationController < ActionController::Base
   # Returns the current user or nil if no user is logged in
   # and starts a session if needed
   def find_current_user
-    user = nil
     user = current_user
     # Switch user if requested by an admin user
     if user && user.admin? && (username = api_switch_user_from_request)
@@ -87,12 +99,18 @@ class ApplicationController < ActionController::Base
     require_login if Setting.login_required?
   end
 
+  def check_password_change
+    if User.current.must_change_password?
+      redirect_to edit_user_registration_path
+    end
+  end
+
   def set_localization
     lang = nil
     if User.current.logged?
       lang = find_language(User.current.language)
     end
-    if lang.nil? && request.env['HTTP_ACCEPT_LANGUAGE']
+    if lang.nil? && !Setting.force_default_language_for_anonymous? && request.env['HTTP_ACCEPT_LANGUAGE']
       accept_lang = parse_qvalues(request.env['HTTP_ACCEPT_LANGUAGE']).first
       if !accept_lang.blank?
         accept_lang = accept_lang.downcase
@@ -195,7 +213,7 @@ class ApplicationController < ActionController::Base
   # Find issues with a single :id param or :ids array param
   # Raises a Unauthorized exception if one of the issues is not visible
   def find_issues
-    @issues = Issue.find_all_by_id(params[:id] || params[:ids])
+    @issues = Issue.where(:id => (params[:id] || params[:ids])).preload(:project, :status, :tracker, :priority, :author, :assigned_to, :relations_to).to_a
     raise ActiveRecord::RecordNotFound if @issues.empty?
     raise Unauthorized unless @issues.all?(&:visible?)
     @projects = @issues.collect(&:project).compact.uniq
@@ -238,12 +256,15 @@ class ApplicationController < ActionController::Base
     url
   end
 
-  def redirect_back_or_default(default)
-    if redirect_back_path
+  def redirect_back_or_default(default, options={})
+    if redirect_back_path.present?
       redirect_to redirect_back_path
-    else
-      redirect_to(default)
+      return
+    elsif options[:referer]
+      redirect_to_referer_or default
+      return
     end
+    redirect_to default
     false
   end
 
@@ -328,13 +349,6 @@ class ApplicationController < ActionController::Base
   # @return [boolean, string] name of the layout to use or false for no layout
   def use_layout
     request.xhr? ? false : 'base'
-  end
-
-  def invalid_authenticity_token
-    if api_request?
-      logger.error "Form authenticity token is missing or is invalid. API calls must include a proper Content-type header (text/xml or text/json)."
-    end
-    render_error "Invalid form authenticity token."
   end
 
   def render_feed(items, options={})

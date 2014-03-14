@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,6 +26,8 @@ class WikiContent < ActiveRecord::Base
 
   acts_as_versioned
 
+  after_save :send_notification
+
   def visible?(user=User.current)
     page.visible?(user)
   end
@@ -42,7 +44,7 @@ class WikiContent < ActiveRecord::Base
   def recipients
     notified = project.notified_users
     notified.reject! {|user| !visible?(user)}
-    notified.collect(&:email)
+    notified.collect(&:mail)
   end
 
   # Return true if the content is the current page content
@@ -142,6 +144,21 @@ class WikiContent < ActiveRecord::Base
         raise ActiveRecord::Rollback unless page.content.revert_to!(latest)
       elsif latest.nil?
         raise ActiveRecord::Rollback unless page.destroy
+      end
+    end
+  end
+
+  private
+
+  def send_notification
+    # new_record? returns false in after_save callbacks
+    if id_changed?
+      if Setting.notified_events.include?('wiki_content_added')
+        Mailer.wiki_content_added(self).deliver
+      end
+    elsif text_changed?
+      if Setting.notified_events.include?('wiki_content_updated')
+        Mailer.wiki_content_updated(self).deliver
       end
     end
   end

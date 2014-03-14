@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -92,7 +92,7 @@ class AdminControllerTest < ActionController::TestCase
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     user = User.find(1)
-    assert_equal [user.email], mail.bcc
+    assert_equal [user.mail], mail.bcc
   end
 
   def test_test_email_failure_should_display_the_error

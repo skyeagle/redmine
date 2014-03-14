@@ -123,8 +123,8 @@
         one: "約 1 小時"
         other: "約 %{count} 小時"
       x_hours:
-        one:   "1 hour"
-        other: "%{count} hours"
+        one:   "1 小時"
+        other: "%{count} 小時"
       x_days:
         one: "1 天"
         other: "%{count} 天"
@@ -186,6 +186,7 @@
         not_same_project: "不屬於同一個專案"
         circular_dependency: "這個關聯會導致環狀相依"
         cant_link_an_issue_with_a_descendant: "問題無法被連結至自己的子任務"
+        earlier_than_minimum_start_date: "cannot be earlier than %{date} because of preceding issues"
 
       # You can define own errors for models or model attributes.
       # The values :model, :attribute and :value are always available for interpolation.
@@ -233,6 +234,8 @@
   notice_account_wrong_password: 密碼不正確
   notice_account_register_done: 帳號已建立成功。欲啟用您的帳號，請點擊系統確認信函中的啟用連結。
   notice_account_unknown_email: 未知的使用者
+  notice_account_not_activated_yet: 您尚未完成啟用您的帳號。若您要索取新的帳號啟用 Email ，請 <a href="%{url}">點擊此連結</a> 。
+  notice_account_locked: 您的帳號已被鎖定。
   notice_can_t_change_password: 這個帳號使用外部認證方式，無法變更其密碼。
   notice_account_lost_email_sent: 包含選擇新密碼指示的電子郵件，已經寄出給您。
   notice_account_activated: 您的帳號已經啟用，可用它登入系統。
@@ -262,6 +265,7 @@
   notice_issue_update_conflict: "當您正在編輯這個問題的時候，它已經被其他人搶先一步更新過。"
   notice_account_deleted: "您的帳戶已被永久刪除。"
   notice_user_successful_create: "已建立用戶 %{id}。"
+  notice_new_password_must_be_different: 新舊密碼必須相異
 
   error_can_t_load_default_data: "無法載入預設組態： %{value}"
   error_scm_not_found: "在儲存機制中找不到這個項目或修訂版。"
@@ -347,7 +351,7 @@
   field_mail_notification: 電子郵件提醒選項
   field_admin: 管理者
   field_last_sign_in_at: 最近連線日期
-  field_language: 語系
+  field_language: 語言
   field_effective_date: 日期
   field_password: 目前密碼
   field_new_password: 新密碼
@@ -417,11 +421,12 @@
   field_private_notes: 私人筆記
   field_inherit_members: 繼承父專案成員
   field_generate_password: 產生密碼
+  field_must_change_passwd: 必須在下次登入時變更密碼
 
   setting_app_title: 標題
   setting_app_subtitle: 副標題
   setting_welcome_text: 歡迎詞
-  setting_default_language: 預設語系
+  setting_default_language: 預設語言
   setting_login_required: 需要驗證
   setting_self_registration: 註冊選項
   setting_attachment_max_size: 附件大小限制
@@ -487,6 +492,9 @@
   setting_non_working_week_days: 非工作日
   setting_jsonp_enabled: 啟用 JSONP 支援
   setting_default_projects_tracker_ids: 新專案預設使用的追蹤標籤
+  setting_mail_handler_excluded_filenames: 移除符合下列名稱的附件
+  setting_force_default_language_for_anonymous: 強迫匿名用戶使用預設語言
+  setting_force_default_language_for_loggedin: 強迫已登入用戶使用預設語言
 
   permission_add_project: 建立專案
   permission_add_subprojects: 建立子專案
@@ -714,7 +722,7 @@
   label_nobody: 無名
   label_next: 下一頁
   label_previous: 上一頁
-  label_used_by: Used by
+  label_used_by: 已使用專案
   label_details: 明細
   label_add_note: 加入一個新筆記
   label_per_page: 每頁
@@ -869,7 +877,7 @@
   label_week: 週
   label_date_from: 開始
   label_date_to: 結束
-  label_language_based: 依用戶之語系決定
+  label_language_based: 依用戶之語言決定
   label_sort_by: "按 %{value} 排序"
   label_send_test_email: 寄送測試郵件
   label_feeds_access_key: Atom 存取金鑰
@@ -967,6 +975,7 @@
   label_fields_permissions: 欄位權限
   label_readonly: 唯讀
   label_required: 必填
+  label_hidden: 隱藏
   label_attribute_of_project: "專案是 %{name}"
   label_attribute_of_issue: "問題是 %{name}"
   label_attribute_of_author: "作者是 %{name}"
@@ -978,6 +987,15 @@
   label_cross_project_hierarchy: 與專案階層架構共用
   label_cross_project_system: 與全部的專案共用
   label_gantt_progress_line: 進度線
+  label_visibility_private: 僅我自己可見
+  label_visibility_roles: 僅選取之角色可見
+  label_visibility_public: 任何用戶均可見
+  label_link: 連結
+  label_only: 僅於
+  label_drop_down_list: 下拉式清單
+  label_checkboxes: 核取方塊
+  label_link_values_to: 連結欄位值至此網址
+  label_custom_field_select_type: 請選擇連結此自訂欄位的物件類型
 
   button_login: 登入
   button_submit: 送出
@@ -1089,6 +1107,7 @@
   text_file_repository_writable: 可寫入附加檔案目錄
   text_plugin_assets_writable: 可寫入附加元件目錄
   text_rmagick_available: 可使用 RMagick (選配)
+  text_convert_available: 可使用 ImageMagick 轉換圖片格式 (選配)
   text_destroy_time_entries_question: 您即將刪除的問題已報工 %{hours} 小時. 您的選擇是？
   text_destroy_time_entries: 刪除已報工的時數
   text_assign_time_entries_to_project: 指定已報工的時數至專案中

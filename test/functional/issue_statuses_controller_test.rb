@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ class IssueStatusesControllerTest < ActionController::TestCase
   def test_index_by_anonymous_should_redirect_to_login_form
     sign_out(:user)
     get :index
-    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fissue_statuses'
+    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fissue_statuses'
   end
 
   def test_index_by_user_should_respond_with_406
@@ -62,7 +62,7 @@ class IssueStatusesControllerTest < ActionController::TestCase
     post :create, :issue_status => {:name => ''}
     assert_response :success
     assert_template 'new'
-    assert_error_tag :content => /name can&#x27;t be blank/i
+    assert_error_tag :content => /name #{ESCAPED_CANT} be blank/i
   end
 
   def test_edit
@@ -82,7 +82,7 @@ class IssueStatusesControllerTest < ActionController::TestCase
     put :update, :id => '3', :issue_status => {:name => ''}
     assert_response :success
     assert_template 'edit'
-    assert_error_tag :content => /name can&#x27;t be blank/i
+    assert_error_tag :content => /name #{ESCAPED_CANT} be blank/i
   end
 
   def test_destroy

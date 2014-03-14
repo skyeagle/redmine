@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -56,6 +56,6 @@ class AdminTest < ActionController::IntegrationTest
          :user => { :login => 'psmith', :firstname => 'Paul'},
          :password => "psmith09", :password_confirmation => "psmith09"
     assert_response :redirect
-    assert_redirected_to "/users/sign_in?back_url=http%3A%2F%2Fwww.example.com%2Fusers"
+    assert_redirected_to "/login?back_url=http%3A%2F%2Fwww.example.com%2Fusers"
   end
 end

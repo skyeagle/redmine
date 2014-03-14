@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -163,11 +163,11 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
         credentials('admin')
     end
 
-    user = User.first(:order => 'id DESC')
+    user = User.order('id DESC').first
     assert_equal 'foo', user.login
     assert_equal 'Firstname', user.firstname
     assert_equal 'Lastname', user.lastname
-    assert_equal 'foo@example.net', user.email
+    assert_equal 'foo@example.net', user.mail
     assert_equal 'only_assigned', user.mail_notification
     assert !user.admin?
     assert user.valid_password?('secret123')
@@ -188,11 +188,11 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
         credentials('admin')
     end
 
-    user = User.first(:order => 'id DESC')
+    user = User.order('id DESC').first
     assert_equal 'foo', user.login
     assert_equal 'Firstname', user.firstname
     assert_equal 'Lastname', user.lastname
-    assert_equal 'foo@example.net', user.email
+    assert_equal 'foo@example.net', user.mail
     assert !user.admin?
 
     assert_response :created
@@ -243,7 +243,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_equal 'jsmith', user.login
     assert_equal 'John', user.firstname
     assert_equal 'Renamed', user.lastname
-    assert_equal 'jsmith@somenet.foo', user.email
+    assert_equal 'jsmith@somenet.foo', user.mail
     assert !user.admin?
 
     assert_response :ok
@@ -264,7 +264,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_equal 'jsmith', user.login
     assert_equal 'John', user.firstname
     assert_equal 'Renamed', user.lastname
-    assert_equal 'jsmith@somenet.foo', user.email
+    assert_equal 'jsmith@somenet.foo', user.mail
     assert !user.admin?
 
     assert_response :ok

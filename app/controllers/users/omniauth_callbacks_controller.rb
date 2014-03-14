@@ -10,7 +10,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
         flash[:notice] = I18n.t "devise.omniauth_callbacks.success", :kind => "Open ID"
         sign_in_and_redirect @user, :event => :authentication
       else
-        expire_session_data_after_sign_in!
+        expire_data_after_sign_in!
         set_flash_message :notice, :"signed_up_but_#{@user.inactive_message}"
         redirect_to new_user_session_url
       end

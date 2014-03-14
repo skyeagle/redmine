@@ -43,7 +43,7 @@ class Users::OmniauthCallbacksControllerTest < ActionController::TestCase
       @user.lock
       @user.save!
       post :open_id
-      assert_redirected_to '/users/sign_in'
+      assert_redirected_to '/login'
     end
   end
 
@@ -63,7 +63,7 @@ class Users::OmniauthCallbacksControllerTest < ActionController::TestCase
     with_settings :self_registration => 0 do
       mock_new_user_openid_authentication
       post :open_id
-      assert_redirected_to '/users/sign_in'
+      assert_redirected_to '/login'
     end
     user = User.find_by_login('newuser')
     assert_nil user
@@ -74,7 +74,7 @@ class Users::OmniauthCallbacksControllerTest < ActionController::TestCase
       mock_new_user_openid_authentication
       assert_difference 'ActionMailer::Base.deliveries.count', 1 do
         post :open_id
-        assert_redirected_to '/users/sign_in'
+        assert_redirected_to '/login'
       end
     end
     user = User.find_by_login('newuser')
@@ -88,7 +88,7 @@ class Users::OmniauthCallbacksControllerTest < ActionController::TestCase
       mock_new_user_openid_authentication
       assert_difference 'ActionMailer::Base.deliveries.count', 1 do
         post :open_id
-        assert_redirected_to '/users/sign_in'
+        assert_redirected_to '/login'
       end
     end
     user = User.find_by_login('newuser')

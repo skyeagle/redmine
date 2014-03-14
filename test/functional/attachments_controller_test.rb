@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -211,7 +211,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_show_file_from_private_issue_without_permission
     get :show, :id => 15
-    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fattachments%2F15'
+    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2F15'
     set_tmp_attachments_directory
   end
 
@@ -276,7 +276,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
   def test_download_should_be_denied_without_permission
     get :download, :id => 7
-    assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fdownload%2F7'
+    assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fdownload%2F7'
     set_tmp_attachments_directory
   end
 
@@ -321,7 +321,7 @@ class AttachmentsControllerTest < ActionController::TestCase
 
     def test_thumbnail_should_be_denied_without_permission
       get :thumbnail, :id => 16
-      assert_redirected_to '/users/sign_in?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fthumbnail%2F16'
+      assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fthumbnail%2F16'
     end
   else
     puts '(ImageMagick convert not available)'
@@ -339,7 +339,7 @@ class AttachmentsControllerTest < ActionController::TestCase
       end
     end
     assert_nil Attachment.find_by_id(1)
-    j = Journal.first(:order => 'id DESC')
+    j = Journal.order('id DESC').first
     assert_equal issue, j.journalized
     assert_equal 'attachment', j.details.first.property
     assert_equal '1', j.details.first.prop_key

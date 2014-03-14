@@ -4,6 +4,7 @@ xml.feed "xmlns" => "http://www.w3.org/2005/Atom" do
   xml.link    "rel" => "self", "href" => url_for(:format => 'atom', :key => User.current.rss_key, :only_path => false)
   xml.link    "rel" => "alternate", "href" => home_url(:only_path => false)
   xml.id      url_for(:controller => 'welcome', :only_path => false)
+  xml.icon    favicon_url
   xml.updated((@journals.first ? @journals.first.event_datetime : Time.now).xmlschema)
   xml.author  { xml.name "#{Setting.app_title}" }
   @journals.each do |change|
@@ -15,7 +16,7 @@ xml.feed "xmlns" => "http://www.w3.org/2005/Atom" do
       xml.updated change.created_on.xmlschema
       xml.author do
         xml.name change.user.name
-        xml.email(change.user.email) if change.user.is_a?(User) && !change.user.email.blank? && !change.user.pref.hide_mail
+        xml.email(change.user.mail) if change.user.is_a?(User) && !change.user.mail.blank? && !change.user.pref.hide_mail
       end
       xml.content "type" => "html" do
         xml.text! '<ul>'

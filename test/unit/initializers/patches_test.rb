@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ class PatchesTest < ActiveSupport::TestCase
   end
 
   test "ActiveRecord::Base.human_attribute_name should cut extra _id suffix for better validation" do
-    assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at_id')
+    assert_equal l('field_last_sign_in_at'), ActiveRecord::Base.human_attribute_name('last_sign_in_at')
   end
 
   test "ActiveRecord::Base.human_attribute_name should default to humanized value if no translation has been found (useful for custom fields)" do

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,15 +20,21 @@ require 'capybara/rails'
 
 Capybara.default_driver = :selenium
 Capybara.register_driver :selenium do |app|
-  # Use the following driver definition to test locally using Chrome (also requires chromedriver to be in PATH)
+  # Use the following driver definition to test locally using Chrome
+  # (also requires chromedriver to be in PATH)
   # Capybara::Selenium::Driver.new(app, :browser => :chrome)
   # Add :switches => %w[--lang=en] to force default browser locale to English
   # Default for Selenium remote driver is to connect to local host on port 4444
   # This can be change using :url => 'http://localhost:9195' if necessary
-  # PhantomJS 1.8 now directly supports Webdriver Wire API, simply run it with `phantomjs --webdriver 4444`
-  # Add :desired_capabilities => Selenium::WebDriver::Remote::Capabilities.internet_explorer) to run on Selenium Grid Hub with IE
+  # PhantomJS 1.8 now directly supports Webdriver Wire API,
+  # simply run it with `phantomjs --webdriver 4444`
+  # Add :desired_capabilities => Selenium::WebDriver::Remote::Capabilities.internet_explorer)
+  # to run on Selenium Grid Hub with IE
   Capybara::Selenium::Driver.new(app, :browser => :remote)
 end
+
+# default: 2
+Capybara.default_wait_time = 2
 
 module Redmine
   module UiTest
@@ -48,7 +54,7 @@ module Redmine
       # using default browser locale which depend on system locale for "real" browsers drivers
       def log_user(login, password)
         visit '/my/page'
-        assert_equal '/users/sign_in', current_path
+        assert_equal '/login', current_path
         within('#login-form form') do
           fill_in "user[login]", :with => login
           fill_in "user[password]", :with => password

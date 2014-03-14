@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,13 +22,19 @@ RedmineApp::Application.routes.draw do
 
   root :to => 'welcome#index', :as => 'home'
 
-  devise_for :users, :controllers => {
-    :confirmations => 'users/confirmations',
-    :sessions => 'users/sessions',
-    :registrations => 'users/registrations',
-    :passwords => 'users/passwords',
-    :omniauth_callbacks => 'users/omniauth_callbacks'
-  }, :path_names => { :registration => 'register' }
+  devise_for :users, controllers: {
+    confirmations:        'users/confirmations',
+    sessions:             'users/sessions',
+    omniauth_callbacks:   'users/omniauth_callbacks',
+    passwords:            'users/passwords',
+    registrations:        'users/registrations'
+  }, path_names: { registration: 'register' }
+
+  devise_scope :user do
+    get    "login",  to: "users/sessions#new",     as: :new_user_session
+    post   "login",  to: "users/sessions#create",  as: :user_session
+    delete "logout", to: "users/sessions#destroy", as: :destroy_user_session
+  end
 
   match '/news/preview', :controller => 'previews', :action => 'news', :as => 'preview_news', :via => [:get, :post, :put]
   match '/issues/preview/new/:project_id', :to => 'previews#issue', :as => 'preview_new_issue', :via => [:get, :post, :put]
@@ -152,7 +158,7 @@ RedmineApp::Application.routes.draw do
         end
       end
     end
-  
+
     match 'wiki/index', :controller => 'wiki', :action => 'index', :via => :get
     resources :wiki, :except => [:index, :new, :create], :as => 'wiki_page' do
       member do

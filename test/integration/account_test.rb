@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2014  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@ class AccountTest < ActionController::IntegrationTest
   # Replace this with your real tests.
   def test_login
     get "my/page"
-    assert_redirected_to "/users/sign_in?back_url=http%3A%2F%2Fwww.example.com%2Fmy%2Fpage"
+    assert_redirected_to "/login?back_url=http%3A%2F%2Fwww.example.com%2Fmy%2Fpage"
     user = User.find_first_by_auth_conditions(:login => 'jsmith')
     assert user.valid?
     log_user('jsmith', 'jsmith')
@@ -50,7 +50,7 @@ class AccountTest < ActionController::IntegrationTest
     Devise.remember_for = 7.days
 
     # User logs in with 'remember_me' checked
-    post '/users/sign_in', :user => { :login => user.login, :password => 'admin', :remember_me => 1 }
+    post '/login', :user => { :login => user.login, :password => 'admin', :remember_me => 1 }
     assert_redirected_to '/my/page'
     assert cookies["remember_user_token"]
 
@@ -62,7 +62,7 @@ class AccountTest < ActionController::IntegrationTest
     assert_nil cookies["remember_user_token"]
 
     get "my/page"
-    assert_redirected_to "/users/sign_in?back_url=http%3A%2F%2Fwww.example.com%2Fmy%2Fpage"
+    assert_redirected_to "/login?back_url=http%3A%2F%2Fwww.example.com%2Fmy%2Fpage"
 
     # User comes back with his remember_me cookie
     raw_cookie = User.serialize_into_cookie(user)
@@ -81,7 +81,7 @@ class AccountTest < ActionController::IntegrationTest
     assert_select "input[name='user[login]']"
 
     post "/users/password", :user => { :login => 'jSmith@somenet.foo' }
-    assert_redirected_to "/users/sign_in"
+    assert_redirected_to "/login"
 
     token = nil
     assert_select_email do
@@ -107,6 +107,32 @@ class AccountTest < ActionController::IntegrationTest
     assert_equal token, user.reset_password_token
   end
 
+  def test_user_with_must_change_passwd_should_be_forced_to_change_its_password
+    User.find_by_login('jsmith').update_attribute :must_change_passwd, true
+
+    post '/login', user: { login: 'jsmith', password: 'jsmith' }
+    assert_redirected_to '/users/register/edit'
+
+    get '/issues'
+    assert_redirected_to '/users/register/edit'
+  end
+
+  def test_user_with_must_change_passwd_should_be_able_to_change_its_password
+    User.find_by_login('jsmith').update_attribute :must_change_passwd, true
+
+    post '/login', user: { login: 'jsmith', password: 'jsmith' }
+    assert_redirected_to '/users/register/edit'
+    follow_redirect!
+    assert_response :success
+
+    put '/users/register', user: {  current_password: 'jsmith', password: 'newpassword', password_confirmation: 'newpassword' }
+    assert_redirected_to '/my/page'
+    follow_redirect!
+    assert_response :success
+
+    assert_equal false, User.find_by_login('jsmith').must_change_passwd?
+  end
+
   def test_register_with_automatic_activation
     Setting.self_registration = '3'
 
@@ -120,7 +146,7 @@ class AccountTest < ActionController::IntegrationTest
         :language => "en",
         :firstname => "New",
         :lastname => "User",
-        :email => "newuser@foo.bar",
+        :mail => "newuser@foo.bar",
         :password => "newpass123",
         :password_confirmation => "newpass123"
       }
@@ -147,7 +173,7 @@ class AccountTest < ActionController::IntegrationTest
         :language => "en",
         :firstname => "New",
         :lastname => "User",
-        :email => "newuser@foo.bar",
+        :mail => "newuser@foo.bar",
         :password => "newpass123",
         :password_confirmation => "newpass123"
       }
@@ -167,7 +193,7 @@ class AccountTest < ActionController::IntegrationTest
         :language => "en",
         :firstname => "New",
         :lastname => "User",
-        :email => "newuser@foo.bar",
+        :mail => "newuser@foo.bar",
         :password => "newpass123",
         :password_confirmation => "newpass123"
       }
@@ -176,7 +202,7 @@ class AccountTest < ActionController::IntegrationTest
     assert_redirected_to '/'
     assert !user.active?
 
-    assert_equal 'newuser@foo.bar', user.email
+    assert_equal 'newuser@foo.bar', user.mail
     assert !user.send(:confirmation_period_valid?)
 
     token = nil
@@ -193,7 +219,7 @@ class AccountTest < ActionController::IntegrationTest
 
   def test_login_by_openid_when_it_disabled_for_existent_user
     with_settings :self_registration => 3, :openid => 0 do
-      post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+      post "/login", :user => { :identity_url => 'uid.someopenid.net' }
       assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
       mock_existen_user_openid_authentication
@@ -206,7 +232,7 @@ class AccountTest < ActionController::IntegrationTest
 
   def test_login_by_openid_when_it_enabled_for_existent_user
     with_settings :self_registration => 3, :openid => 1 do
-      post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+      post "/login", :user => { :identity_url => 'uid.someopenid.net' }
       assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
       mock_existen_user_openid_authentication
@@ -219,7 +245,7 @@ class AccountTest < ActionController::IntegrationTest
 
   def test_login_by_openid_when_it_disabled_for_new_user
     with_settings :self_registration => 3, :openid => 0 do
-      post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+      post "/login", :user => { :identity_url => 'uid.someopenid.net' }
       assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
       mock_new_user_openid_authentication
@@ -233,7 +259,7 @@ class AccountTest < ActionController::IntegrationTest
   def test_login_by_openid_when_it_enabled_for_new_user_and_auto_activation
     with_settings :self_registration => 3, :openid => 1 do
       assert_no_difference 'ActionMailer::Base.deliveries.count' do
-        post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+        post "/login", :user => { :identity_url => 'uid.someopenid.net' }
         assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
         mock_new_user_openid_authentication
@@ -250,7 +276,7 @@ class AccountTest < ActionController::IntegrationTest
   def test_login_by_openid_when_it_enabled_for_new_user_with_validation_failed_and_activation_by_email
     with_settings :self_registration => 1, :openid => 1 do
       assert_no_difference 'ActionMailer::Base.deliveries.count' do
-        post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+        post "/login", :user => { :identity_url => 'uid.someopenid.net' }
         assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
         mock_new_user_openid_authentication_with_invalid_data
@@ -265,7 +291,7 @@ class AccountTest < ActionController::IntegrationTest
   def test_login_by_openid_when_it_enabled_for_new_user_with_validation_failed_and_manual_activation
     with_settings :self_registration => 2, :openid => 1 do
       assert_no_difference 'ActionMailer::Base.deliveries.count' do
-        post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+        post "/login", :user => { :identity_url => 'uid.someopenid.net' }
         assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
         mock_new_user_openid_authentication_with_invalid_data
@@ -280,7 +306,7 @@ class AccountTest < ActionController::IntegrationTest
   def test_login_by_openid_when_it_enabled_for_new_user_with_validation_failed_and_auto_activation
     with_settings :self_registration => 3, :openid => 1 do
       assert_no_difference 'ActionMailer::Base.deliveries.count' do
-        post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+        post "/login", :user => { :identity_url => 'uid.someopenid.net' }
         assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
         mock_new_user_openid_authentication_with_invalid_data
@@ -295,14 +321,14 @@ class AccountTest < ActionController::IntegrationTest
   def test_login_by_openid_when_it_enabled_for_new_user_with_activation_by_email
     with_settings :self_registration => 1, :openid => 1 do
       assert_difference 'ActionMailer::Base.deliveries.count', 1 do
-        post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+        post "/login", :user => { :identity_url => 'uid.someopenid.net' }
         assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
         mock_new_user_openid_authentication
         follow_redirect!
         assert_redirected_to "/users/auth/open_id/callback?openid_url=uid.someopenid.net"
         follow_redirect!
-        assert_redirected_to "/users/sign_in"
+        assert_redirected_to "/login"
         user = User.where(:email => 'abc@abc.com').first
         assert !user.active?
       end
@@ -313,14 +339,14 @@ class AccountTest < ActionController::IntegrationTest
     with_settings :self_registration => 2, :openid => 1 do
       # account activation request for admin
       assert_difference 'ActionMailer::Base.deliveries.count', 1 do
-        post "/users/sign_in", :user => { :identity_url => 'uid.someopenid.net' }
+        post "/login", :user => { :identity_url => 'uid.someopenid.net' }
         assert_redirected_to "/users/auth/open_id?openid_url=uid.someopenid.net"
 
         mock_new_user_openid_authentication
         follow_redirect!
         assert_redirected_to "/users/auth/open_id/callback?openid_url=uid.someopenid.net"
         follow_redirect!
-        assert_redirected_to "/users/sign_in"
+        assert_redirected_to "/login"
         user = User.where(:email => 'abc@abc.com').first
         assert !user.active?
         assert user.registered?
@@ -331,11 +357,44 @@ class AccountTest < ActionController::IntegrationTest
   def test_login_with_invalid_openid_provider
     OmniAuth.config.test_mode = false
     with_settings :openid => 1, :self_registration => 0 do
-      post "/users/sign_in", :user => { :identity_url => 'http;//uid.someopenid.net' }
+      post "/login", :user => { :identity_url => 'http;//uid.someopenid.net' }
       follow_redirect!
       assert_redirected_to new_user_session_path
       assert_equal 'Could not authenticate you from OpenID because "Connection failed".', flash[:alert]
     end
   end
 
+  def test_registered_user_should_be_able_to_get_a_new_activation_email
+    Token.delete_all
+
+    with_settings :self_registration => '1', :default_language => 'en' do
+      # register a new account
+      assert_difference 'User.count' do
+        assert_no_difference 'Token.count' do
+          post 'users/register',
+             :user => {:login => "newuser", :language => "en",
+                       :firstname => "New", :lastname => "User", :email => "newuser@foo.bar",
+                       :password => "newpass123", :password_confirmation => "newpass123"}
+        end
+      end
+      user = User.order('id desc').first
+      assert_equal User::STATUS_REGISTERED, user.status
+      reset!
+
+      assert_difference 'ActionMailer::Base.deliveries.size' do
+        post '/users/confirmation', user: { login: 'newuser@foo.bar' }
+      end
+
+      token = nil
+      assert_select_email do
+        token = assert_select('a').first['href'].match(/\=(.+)$/)[1]
+      end
+
+      get 'users/confirmation', :confirmation_token => token
+      assert_redirected_to '/my/page'
+      user.reload
+      assert user.active?
+      assert user.active_for_authentication?
+    end
+  end
 end

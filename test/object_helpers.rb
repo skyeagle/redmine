@@ -13,7 +13,7 @@ module ObjectHelpers
     user = User.new(attributes)
     user.password = Devise.friendly_token[0,20]
     user.login = @generated_user_login.dup if user.login.blank?
-    user.email = "#{@generated_user_login}@example.com" if user.email.blank?
+    user.mail = "#{@generated_user_login}@example.com" if user.mail.blank?
     user.firstname = "Bob" if user.firstname.blank?
     user.lastname = "Doe" if user.lastname.blank?
     yield user if block_given?
@@ -73,13 +73,20 @@ module ObjectHelpers
     role
   end
 
-  def Issue.generate!(attributes={})
+  # Generates an unsaved Issue
+  def Issue.generate(attributes={})
     issue = Issue.new(attributes)
     issue.project ||= Project.find(1)
     issue.tracker ||= issue.project.trackers.first
     issue.subject = 'Generated' if issue.subject.blank?
     issue.author ||= User.find(2)
     yield issue if block_given?
+    issue
+  end
+
+  # Generates a saved Issue
+  def Issue.generate!(attributes={}, &block)
+    issue = Issue.generate(attributes, &block)
     issue.save!
     issue
   end
@@ -157,4 +164,29 @@ module ObjectHelpers
     field.save!
     field
   end
+
+  def Changeset.generate!(attributes={})
+    @generated_changeset_rev ||= '123456'
+    @generated_changeset_rev.succ!
+    changeset = new(attributes)
+    changeset.repository ||= Project.find(1).repository
+    changeset.revision ||= @generated_changeset_rev
+    changeset.committed_on ||= Time.now
+    yield changeset if block_given?
+    changeset.save!
+    changeset
+  end
 end
+
+module IssueObjectHelpers
+  def close!
+    self.status = IssueStatus.where(:is_closed => true).first
+    save!
+  end
+
+  def generate_child!(attributes={})
+    Issue.generate!(attributes.merge(:parent_issue_id => self.id))
+  end
+end
+
+Issue.send :include, IssueObjectHelpers

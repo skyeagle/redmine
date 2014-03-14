@@ -40,7 +40,7 @@ class Users::RegistrationsControllerTest < ActionController::TestCase
   def test_get_register_with_registration_off_should_redirect
     with_settings :self_registration => '0' do
       get :new
-      assert_redirected_to '/users/sign_in'
+      assert_redirected_to '/login'
     end
   end
 
@@ -134,7 +134,7 @@ class Users::RegistrationsControllerTest < ActionController::TestCase
             :lastname => 'Doe',
             :email => 'register@example.com'
           }
-          assert_redirected_to '/users/sign_in'
+          assert_redirected_to '/login'
         end
       end
     end
