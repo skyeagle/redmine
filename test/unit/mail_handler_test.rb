@@ -67,6 +67,7 @@ class MailHandlerTest < ActiveSupport::TestCase
     # Email notification should be sent
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
+    assert mail.subject.include?("##{issue.id}")
     assert mail.subject.include?('New ticket on a given project')
   end
 
@@ -203,6 +204,14 @@ class MailHandlerTest < ActiveSupport::TestCase
     end
     assert issue.is_a?(Issue)
     assert_equal user, issue.assigned_to
+  end
+
+  def test_add_issue_should_set_default_start_date
+    with_settings :default_issue_start_date_to_creation_date => '1' do
+      issue = submit_email('ticket_with_cc.eml', :issue => {:project => 'ecookbook'})
+      assert issue.is_a?(Issue)
+      assert_equal Date.today, issue.start_date
+    end
   end
 
   def test_add_issue_with_cc
@@ -366,19 +375,21 @@ class MailHandlerTest < ActiveSupport::TestCase
   end
 
   def test_add_issue_with_invalid_attributes
-    issue = submit_email(
-              'ticket_with_invalid_attributes.eml',
-              :allow_override => 'tracker,category,priority'
-            )
-    assert issue.is_a?(Issue)
-    assert !issue.new_record?
-    issue.reload
-    assert_nil issue.assigned_to
-    assert_nil issue.start_date
-    assert_nil issue.due_date
-    assert_equal 0, issue.done_ratio
-    assert_equal 'Normal', issue.priority.to_s
-    assert issue.description.include?('Lorem ipsum dolor sit amet, consectetuer adipiscing elit.')
+    with_settings :default_issue_start_date_to_creation_date => '0' do
+      issue = submit_email(
+                'ticket_with_invalid_attributes.eml',
+                :allow_override => 'tracker,category,priority'
+              )
+      assert issue.is_a?(Issue)
+      assert !issue.new_record?
+      issue.reload
+      assert_nil issue.assigned_to
+      assert_nil issue.start_date
+      assert_nil issue.due_date
+      assert_equal 0, issue.done_ratio
+      assert_equal 'Normal', issue.priority.to_s
+      assert issue.description.include?('Lorem ipsum dolor sit amet, consectetuer adipiscing elit.')
+    end
   end
 
   def test_add_issue_with_invalid_project_should_be_assigned_to_default_project
@@ -642,6 +653,19 @@ class MailHandlerTest < ActiveSupport::TestCase
 
       assert_no_difference 'Issue.count' do
         assert_equal false, MailHandler.receive(raw), "email with #{header} header was not ignored"
+      end
+    end
+  end
+
+  test "should not ignore Auto-Submitted headers not defined in RFC3834" do
+    [
+      "Auto-Submitted: auto-forwarded"
+    ].each do |header|
+      raw = IO.read(File.join(FIXTURES_PATH, 'ticket_on_given_project.eml'))
+      raw = header + "\n" + raw
+
+      assert_difference 'Issue.count', 1 do
+        assert_not_nil MailHandler.receive(raw), "email with #{header} header was ignored"
       end
     end
   end

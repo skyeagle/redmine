@@ -73,7 +73,7 @@ class Enumeration < ActiveRecord::Base
     self.objects_count != 0
   end
 
-  # Is this enumeration overiding a system level enumeration?
+  # Is this enumeration overriding a system level enumeration?
   def is_override?
     !self.parent.nil?
   end
@@ -103,8 +103,14 @@ class Enumeration < ActiveRecord::Base
     subclasses
   end
 
-  # Does the +new+ Hash override the previous Enumeration?
+  # TODO: remove in Redmine 3.0
   def self.overridding_change?(new, previous)
+    ActiveSupport::Deprecation.warn "Enumeration#overridding_change? is deprecated and will be removed in Redmine 3.0. Please use #overriding_change?."
+    overriding_change?(new, previous)
+  end
+
+  # Does the +new+ Hash override the previous Enumeration?
+  def self.overriding_change?(new, previous)
     if (same_active_state?(new['active'], previous.active)) && same_custom_values?(new,previous)
       return false
     else

@@ -1220,8 +1220,12 @@ ru:
   label_link_values_to: Значения ссылки для URL
   setting_force_default_language_for_anonymous: Не определять язык для анонимных пользователей
   setting_force_default_language_for_loggedin: Не определять язык для зарегистрированных пользователей
-  label_custom_field_select_type: Select the type of object to which the custom field
-    is to be attached
+  label_custom_field_select_type: Выберите тип объекта для которого будет создано настраиваемое поле
+  label_issue_assigned_to_updated: Assignee updated
+  label_check_for_updates: Check for updates
+  label_latest_compatible_version: Latest compatible version
+  label_unknown_plugin: Unknown plugin
+  label_radio_buttons: radio buttons
 
   # Devise translations
   errors:

@@ -1,14 +1,14 @@
 source 'https://rubygems.org'
 
-gem "rails", "3.2.17"
+gem "rails", "3.2.19"
 gem 'devise', '3.2.3'
 gem 'devise-encryptable'
 gem "jquery-rails", "~> 2.0.2"
 gem "coderay", "~> 1.1.0"
 gem "fastercsv", "~> 1.5.0", :platforms => [:mri_18, :mingw_18, :jruby]
-gem "builder", "3.0.0"
+gem "builder", ">= 3.0.4"
+gem "request_store", "1.0.5"
 gem "mime-types"
-gem "awesome_nested_set", "2.1.6"
 
 # Optional gem for LDAP authentication
 group :ldap do
@@ -67,7 +67,7 @@ if File.exist?(database_file)
         gem "sqlite3", :platforms => [:mri, :mingw]
         gem "activerecord-jdbcsqlite3-adapter", :platforms => :jruby
       when /sqlserver/
-        gem "tiny_tds", "~> 0.5.1", :platforms => [:mri, :mingw]
+        gem "tiny_tds", "~> 0.6.2", :platforms => [:mri, :mingw]
         gem "activerecord-sqlserver-adapter", :platforms => [:mri, :mingw]
       else
         warn("Unknown database adapter `#{adapter}` found in config/database.yml, use Gemfile.local to load your own database gems")
@@ -92,7 +92,7 @@ end
 
 group :test do
   gem "shoulda", "~> 3.3.2"
-  gem "mocha", ">= 0.14", :require => 'mocha/api'
+  gem "mocha", "~> 1.0.0", :require => 'mocha/api'
   if RUBY_VERSION >= '1.9.3'
     gem "capybara", "~> 2.1.0"
     gem "selenium-webdriver"

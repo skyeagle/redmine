@@ -18,11 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 module ProjectsHelper
-  def link_to_version(version, options = {})
-    return '' unless version && version.is_a?(Version)
-    link_to_if version.visible?, format_version_name(version), { :controller => 'versions', :action => 'show', :id => version }, options
-  end
-
   def project_settings_tabs
     tabs = [{:name => 'info', :action => :edit_project, :partial => 'projects/edit', :label => :label_information_plural},
             {:name => 'modules', :action => :select_project_modules, :partial => 'projects/settings/modules', :label => :label_module_plural},
@@ -49,6 +44,21 @@ module ProjectsHelper
     options << "<option value=''>&nbsp;</option>" if project.allowed_parents.include?(nil)
     options << project_tree_options_for_select(project.allowed_parents.compact, :selected => selected)
     content_tag('select', options.html_safe, :name => 'project[parent_id]', :id => 'project_parent_id')
+  end
+
+  def render_project_action_links
+    links = []
+    if User.current.allowed_to?(:add_project, nil, :global => true)
+      links << link_to(l(:label_project_new), new_project_path, :class => 'icon icon-add')
+    end
+    if User.current.allowed_to?(:view_issues, nil, :global => true)
+      links << link_to(l(:label_issue_view_all), issues_path)
+    end
+    if User.current.allowed_to?(:view_time_entries, nil, :global => true)
+      links << link_to(l(:label_overall_spent_time), time_entries_path)
+    end
+    links << link_to(l(:label_overall_activity), activity_path)
+    links.join(" | ").html_safe
   end
 
   # Renders the projects index

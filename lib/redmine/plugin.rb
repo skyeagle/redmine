@@ -113,6 +113,12 @@ module Redmine #:nodoc:
       @registered_plugins = {}
     end
 
+    # Removes a plugin from the registered plugins
+    # It doesn't unload the plugin
+    def self.unregister(id)
+      @registered_plugins.delete(id)
+    end
+
     # Checks if a plugin is installed
     #
     # @param [String] id name of the plugin
@@ -325,7 +331,7 @@ module Redmine #:nodoc:
     # Associated model(s) must implement the find_events class method.
     # ActiveRecord models can use acts_as_activity_provider as a way to implement this class method.
     #
-    # The following call should return all the scrum events visible by current user that occured in the 5 last days:
+    # The following call should return all the scrum events visible by current user that occurred in the 5 last days:
     #   Meeting.find_events('scrums', User.current, 5.days.ago, Date.today)
     #   Meeting.find_events('scrums', User.current, 5.days.ago, Date.today, :project => foo) # events for project foo only
     #

@@ -460,6 +460,7 @@ de:
   label_changes_details: Details aller Änderungen
   label_changeset_plural: Changesets
   label_checkboxes: Checkboxen
+  label_check_for_updates: Auf Updates prüfen
   label_child_revision: Nachfolger
   label_chronological_order: in zeitlicher Reihenfolge
   label_close_versions: Vollständige Versionen schließen
@@ -568,6 +569,7 @@ de:
   label_internal: Intern
   label_issue: Ticket
   label_issue_added: Ticket hinzugefügt
+  label_issue_assigned_to_updated: Bearbeiter aktualisiert
   label_issue_category: Ticket-Kategorie
   label_issue_category_new: Neue Kategorie
   label_issue_category_plural: Ticket-Kategorien
@@ -596,11 +598,13 @@ de:
   label_last_n_days: "die letzten %{count} Tage"
   label_last_n_weeks: letzte %{count} Wochen
   label_last_week: vorige Woche
+  label_latest_compatible_version: Letzte kompatible Version
   label_latest_revision: Aktuellste Revision
   label_latest_revision_plural: Aktuellste Revisionen
   label_ldap_authentication: LDAP-Authentifizierung
   label_less_or_equal: "<="
   label_less_than_ago: vor weniger als
+  label_link: Link
   label_link_values_to: Werte mit URL verknüpfen
   label_list: Liste
   label_loading: Lade...
@@ -681,6 +685,7 @@ de:
   label_query: Benutzerdefinierte Abfrage
   label_query_new: Neue Abfrage
   label_query_plural: Benutzerdefinierte Abfragen
+  label_radio_buttons: Radio-Buttons
   label_read: Lesen...
   label_readonly: Nur-Lese-Zugriff
   label_register: Registrieren
@@ -757,6 +762,7 @@ de:
   label_tracker: Tracker
   label_tracker_new: Neuer Tracker
   label_tracker_plural: Tracker
+  label_unknown_plugin: Unbekanntes Plugin
   label_update_issue_done_ratios: Ticket-Fortschritt aktualisieren
   label_updated_time: "Vor %{value} aktualisiert"
   label_updated_time_by: "Von %{author} vor %{age} aktualisiert"
@@ -1120,4 +1126,3 @@ de:
   version_status_open: offen
 
   warning_attachments_not_saved: "%{count} Datei(en) konnten nicht gespeichert werden."
-  label_link: Link

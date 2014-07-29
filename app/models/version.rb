@@ -226,6 +226,11 @@ class Version < ActiveRecord::Base
     end
   end
 
+  # Returns true if the version is shared, otherwise false
+  def shared?
+    sharing != 'none'
+  end
+
   private
 
   def load_issue_counts
@@ -256,7 +261,7 @@ class Version < ActiveRecord::Base
 
   # Returns the average estimated time of assigned issues
   # or 1 if no issue has an estimated time
-  # Used to weigth unestimated issues in progress calculation
+  # Used to weight unestimated issues in progress calculation
   def estimated_average
     if @estimated_average.nil?
       average = fixed_issues.average(:estimated_hours).to_f

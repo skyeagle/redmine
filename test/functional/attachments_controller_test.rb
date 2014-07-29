@@ -193,12 +193,12 @@ class AttachmentsControllerTest < ActionController::TestCase
   end
 
   def test_show_text_file_should_send_if_too_big
-    Setting.file_max_size_displayed = 512
-    Attachment.find(4).update_attribute :filesize, 754.kilobyte
-
-    get :show, :id => 4
-    assert_response :success
-    assert_equal 'application/x-ruby', @response.content_type
+    with_settings :file_max_size_displayed => 512 do
+      Attachment.find(4).update_attribute :filesize, 754.kilobyte
+      get :show, :id => 4
+      assert_response :success
+      assert_equal 'application/x-ruby', @response.content_type
+    end
     set_tmp_attachments_directory
   end
 
@@ -250,6 +250,13 @@ class AttachmentsControllerTest < ActionController::TestCase
     get :download, :id => 4
     assert_response :success
     assert_equal 'application/x-ruby', @response.content_type
+    etag = @response.etag
+    assert_not_nil etag
+
+    @request.env["HTTP_IF_NONE_MATCH"] = etag
+    get :download, :id => 4
+    assert_response 304
+
     set_tmp_attachments_directory
   end
 
@@ -284,10 +291,16 @@ class AttachmentsControllerTest < ActionController::TestCase
     def test_thumbnail
       Attachment.clear_thumbnails
       sign_in users(:users_002)
-
       get :thumbnail, :id => 16
       assert_response :success
       assert_equal 'image/png', response.content_type
+
+      etag = @response.etag
+      assert_not_nil etag
+
+      @request.env["HTTP_IF_NONE_MATCH"] = etag
+      get :thumbnail, :id => 16
+      assert_response 304
     end
 
     def test_thumbnail_should_not_exceed_maximum_size

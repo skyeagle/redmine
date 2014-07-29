@@ -203,7 +203,29 @@ module ActionController
   end
 end
 
-require 'awesome_nested_set/version'
+if Rails::VERSION::MAJOR < 4 && RUBY_VERSION >= "2.1"
+  module ActiveSupport
+    class HashWithIndifferentAccess
+      def select(*args, &block)
+        dup.tap { |hash| hash.select!(*args, &block) }
+      end
+
+      def reject(*args, &block)
+        dup.tap { |hash| hash.reject!(*args, &block) }
+      end
+    end
+
+    class OrderedHash
+      def select(*args, &block)
+        dup.tap { |hash| hash.select!(*args, &block) }
+      end
+
+      def reject(*args, &block)
+        dup.tap { |hash| hash.reject!(*args, &block) }
+      end
+    end
+  end
+end
 
 module CollectiveIdea
   module Acts
@@ -213,23 +235,6 @@ module CollectiveIdea
           new_record? || leaf_without_new_record?
         end
         alias_method_chain :leaf?, :new_record
-        # Reload is needed because children may have updated
-        # their parent (self) during deletion.
-        if ::AwesomeNestedSet::VERSION > "2.1.6"
-          module Prunable
-            def destroy_descendants_with_reload
-              destroy_descendants_without_reload
-              reload
-            end
-            alias_method_chain :destroy_descendants, :reload
-          end
-        else
-          def destroy_descendants_with_reload
-            destroy_descendants_without_reload
-            reload
-          end
-          alias_method_chain :destroy_descendants, :reload
-        end
       end
     end
   end

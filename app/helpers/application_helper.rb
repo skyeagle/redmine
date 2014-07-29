@@ -157,8 +157,18 @@ module ApplicationHelper
     end
   end
 
+  # Generates a link to a version
+  def link_to_version(version, options = {})
+    return '' unless version && version.is_a?(Version)
+    options = {:title => format_date(version.effective_date)}.merge(options)
+    link_to_if version.visible?, format_version_name(version), version_path(version), options
+  end
+
   # Helper that formats object for html or text rendering
-  def format_object(object, html=true)
+  def format_object(object, html=true, &block)
+    if block_given?
+      object = yield object
+    end
     case object.class.name
     when 'Array'
       object.map {|o| format_object(o, html)}.join(', ').html_safe
@@ -175,7 +185,7 @@ module ApplicationHelper
     when 'Project'
       html ? link_to_project(object) : object.to_s
     when 'Version'
-      html ? link_to(object.name, version_path(object)) : object.to_s
+      html ? link_to_version(object) : object.to_s
     when 'TrueClass'
       l(:general_text_Yes)
     when 'FalseClass'
@@ -188,7 +198,7 @@ module ApplicationHelper
         if f.nil? || f.is_a?(String)
           f
         else
-          format_object(f, html)
+          format_object(f, html, &block)
         end
       else
         object.value.to_s
@@ -237,7 +247,7 @@ module ApplicationHelper
   end
 
   def format_version_name(version)
-    if version.project == @project
+    if !version.shared? || version.project == @project
       h(version)
     else
       h("#{version.project} - #{version}")
@@ -819,6 +829,7 @@ module ApplicationHelper
         elsif sep == ':'
           # removes the double quotes if any
           name = identifier.gsub(%r{^"(.*)"$}, "\\1")
+          name = CGI.unescapeHTML(name)
           case prefix
           when 'document'
             if project && document = project.documents.visible.find_by_title(name)
@@ -859,7 +870,7 @@ module ApplicationHelper
                 if repository && User.current.allowed_to?(:browse_repository, project)
                   name =~ %r{^[/\\]*(.*?)(@([^/\\@]+?))?(#(L\d+))?$}
                   path, rev, anchor = $1, $3, $5
-                  link = link_to h("#{project_prefix}#{prefix}:#{repo_prefix}#{name}"), {:controller => 'repositories', :action => (prefix == 'export' ? 'raw' : 'entry'), :id => project, :repository_id => repository.identifier_param,
+                  link = link_to h("#{project_prefix}#{prefix}:#{repo_prefix}#{name}"), {:only_path => only_path, :controller => 'repositories', :action => (prefix == 'export' ? 'raw' : 'entry'), :id => project, :repository_id => repository.identifier_param,
                                                           :path => to_path_param(path),
                                                           :rev => rev,
                                                           :anchor => anchor},
@@ -978,19 +989,20 @@ module ApplicationHelper
     end
   end
 
-  TOC_RE = /<p>\{\{([<>]?)toc\}\}<\/p>/i unless const_defined?(:TOC_RE)
+  TOC_RE = /<p>\{\{((<|&lt;)|(>|&gt;))?toc\}\}<\/p>/i unless const_defined?(:TOC_RE)
 
   # Renders the TOC with given headings
   def replace_toc(text, headings)
     text.gsub!(TOC_RE) do
+      left_align, right_align = $2, $3
       # Keep only the 4 first levels
       headings = headings.select{|level, anchor, item| level <= 4}
       if headings.empty?
         ''
       else
         div_class = 'toc'
-        div_class << ' right' if $1 == '>'
-        div_class << ' left' if $1 == '<'
+        div_class << ' right' if right_align
+        div_class << ' left' if left_align
         out = "<ul class=\"#{div_class}\"><li>"
         root = headings.map(&:first).min
         current = root
@@ -1327,7 +1339,7 @@ module ApplicationHelper
   def api_meta(options)
     if params[:nometa].present? || request.headers['X-Redmine-Nometa']
       # compatibility mode for activeresource clients that raise
-      # an error when unserializing an array with attributes
+      # an error when deserializing an array with attributes
       nil
     else
       options

@@ -81,7 +81,7 @@ class Mailer < ActionMailer::Base
   def self.deliver_issue_edit(journal)
     issue = journal.journalized.reload
     to = journal.notified_users
-    cc = journal.notified_watchers
+    cc = journal.notified_watchers - to
     journal.each_notification(to + cc) do |users|
       issue.each_notification(users) do |users2|
         Mailer.issue_edit(journal, to & users2, cc & users2).deliver
@@ -461,7 +461,7 @@ class Mailer < ActionMailer::Base
     if rand
       hash << Redmine::Utils.random_hex(8)
     end
-    host = Setting.mail_from.to_s.gsub(%r{^.*@}, '')
+    host = Setting.mail_from.to_s.strip.gsub(%r{^.*@|>}, '')
     host = "#{::Socket.gethostname}.redmine" if host.empty?
     "#{hash.join('.')}@#{host}"
   end
